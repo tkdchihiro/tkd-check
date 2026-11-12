@@ -140,6 +140,8 @@ table.meta td:last-child{text-align:right;font-variant-numeric:tabular-nums}
     <p class="small" style="margin:0">スマホを<b>横向き</b>にして、撮るときと同じ場所に置きます。構えて立つと、全身が入っているか・大きさ・横向きか・明るさを判定します。<br>OK が出たら<b>カメラアプリに切り替えて撮影</b>（ふつうの動画・1080p・60fps）。</p>
     <button class="btn" id="liveStart">カメラを起動</button>
     <button class="btn secondary hidden" id="liveStop">止める</button>
+    <button class="btn" id="shootBtn" style="margin-top:8px">カメラアプリで撮影 → そのまま調べる</button>
+    <input type="file" id="shoot" accept="video/*" capture="environment" class="hidden">
     <select id="camSel" class="hidden" style="margin-top:8px;max-width:100%"></select>
     <div class="small hidden" id="camInfo" style="margin-top:6px"></div>
   </div>
@@ -303,8 +305,9 @@ const video = $("afterVideo"), ov = $("afterOv"), ovCtx = ov.getContext("2d");
 let fileInfo = null;
 let frames_last = null;   // スキャン中に骨格を重ねて見せる用
 
-$("file").onchange = e => {
-  const f = e.target.files[0]; if (!f) return;
+$("file").onchange = e => loadFile(e.target.files[0]);
+function loadFile(f) {
+  if (!f) return;
   if (video.src) URL.revokeObjectURL(video.src);
   video.src = URL.createObjectURL(f);
   fileInfo = { name: f.name, size: f.size };
@@ -312,6 +315,14 @@ $("file").onchange = e => {
   $("afterStage").classList.remove("hidden");
   $("result").classList.add("hidden");
   video.onloadedmetadata = () => { ov.width = video.videoWidth; ov.height = video.videoHeight; $("analyzeBtn").disabled = false; };
+}
+// 試し：純正カメラを呼んで撮る（撮ったら②へ直行）。カメラを使っているとアプリが開けないので先に止める
+$("shootBtn").onclick = () => { stopLive(); $("shoot").value = ""; $("shoot").click(); };
+$("shoot").onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  document.querySelector('.tabs button[data-tab="after"]').click();
+  loadFile(f);
+  $("afterStage").scrollIntoView({ behavior: "smooth" });
 };
 
 const waitEvent = (el, ev) => new Promise(r => el.addEventListener(ev, r, { once: true }));
