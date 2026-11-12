@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>撮影チェック</title>
+<style>
+:root{
+  --bg:#f6f5f2; --card:#ffffff; --ink:#1d1d1f; --sub:#6b6b70; --line:#e2e0da;
+  --ok:#1f8a4c; --ok-bg:#e5f4ea; --warn:#a86500; --warn-bg:#fdf1dc; --ng:#c0392b; --ng-bg:#fbe5e2;
+  --accent:#2f5fd0; --accent-ink:#fff;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141416; --card:#1f1f23; --ink:#ececf0; --sub:#9a9aa3; --line:#33333a;
+    --ok:#4cc27e; --ok-bg:#16301f; --warn:#f0b04a; --warn-bg:#352a14; --ng:#ff7a6b; --ng-bg:#3a1c19;
+    --accent:#6f95ff; --accent-ink:#0d1020;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141416; --card:#1f1f23; --ink:#ececf0; --sub:#9a9aa3; --line:#33333a;
+  --ok:#4cc27e; --ok-bg:#16301f; --warn:#f0b04a; --warn-bg:#352a14; --ng:#ff7a6b; --ng-bg:#3a1c19;
+  --accent:#6f95ff; --accent-ink:#0d1020;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+  padding:0 16px calc(32px + env(safe-area-inset-bottom))}
+main{max-width:760px;margin:0 auto}
+header{padding:20px 0 8px}
+h1{font-size:22px;margin:0}
+.sub{color:var(--sub);font-size:13px;margin:2px 0 0}
+.tabs{display:flex;gap:8px;margin:12px 0 16px;position:sticky;top:0;background:var(--bg);padding:8px 0;z-index:5}
+.tabs button{flex:1;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:10px 6px;font-size:14px;font-weight:600}
+.tabs button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:0 0 14px}
+.card h2{font-size:16px;margin:0 0 8px}
+label.row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0;font-size:14px}
+select,input[type=number]{font:inherit;font-size:14px;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+input[type=number]{width:80px}
+.btn{display:block;width:100%;border:0;border-radius:12px;padding:14px;font-size:16px;font-weight:700;background:var(--accent);color:var(--accent-ink);margin-top:10px}
+.btn.secondary{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn:disabled{opacity:.45}
+.file{display:block;border:2px dashed var(--line);border-radius:12px;padding:18px;text-align:center;color:var(--sub);font-size:14px}
+.file input{display:none}
+.file b{color:var(--ink)}
+video,canvas{max-width:100%;display:block}
+.stage{position:relative;background:#000;border-radius:12px;overflow:hidden}
+.stage video,.stage canvas{width:100%}
+.stage canvas.ov{position:absolute;inset:0;height:100%}
+.bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin:10px 0 4px}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+.small{font-size:12px;color:var(--sub)}
+.verdict{border-radius:14px;padding:16px;margin:0 0 14px;font-weight:700;font-size:18px}
+.verdict small{display:block;font-weight:400;font-size:13px;margin-top:4px}
+.v-ok{background:var(--ok-bg);color:var(--ok)}
+.v-warn{background:var(--warn-bg);color:var(--warn)}
+.v-ng{background:var(--ng-bg);color:var(--ng)}
+ul.checks{list-style:none;margin:0;padding:0}
+ul.checks li{display:flex;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:14px}
+ul.checks li:first-child{border-top:0}
+.mk{flex:0 0 26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:14px}
+.mk.ok{background:var(--ok-bg);color:var(--ok)} .mk.warn{background:var(--warn-bg);color:var(--warn)} .mk.ng{background:var(--ng-bg);color:var(--ng)} .mk.na{background:var(--line);color:var(--sub)}
+.ck b{display:block}
+.ck span{color:var(--sub)}
+.kicks{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.kick{border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:12px}
+.kick canvas{width:100%;background:#000}
+.kick div{padding:6px 8px}
+.kick .ttl{font-weight:700;font-size:13px}
+.live-status{position:absolute;left:8px;right:8px;top:8px;border-radius:10px;padding:8px 10px;font-weight:700;font-size:15px;text-align:center}
+details{margin:0 0 14px}
+details summary{font-weight:700;cursor:pointer}
+details ul{padding-left:20px;font-size:14px;margin:8px 0 0}
+.hidden{display:none !important}
+table.meta{width:100%;font-size:13px;border-collapse:collapse}
+table.meta td{padding:4px 0;border-top:1px solid var(--line)}
+table.meta td:last-child{text-align:right;font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>撮影チェック</h1>
+  <p class="sub">テコンドー分析用。動画は<b>この端末の中だけ</b>で調べます（外へ送りません）。骨格モデル（約5〜9MB）だけ初回に読み込みます。</p>
+</header>
+
+<nav class="tabs">
+  <button data-tab="after" class="on">② 撮った動画を調べる</button>
+  <button data-tab="live">① 撮る前の位置合わせ</button>
+</nav>
+
+<!-- ② 撮った直後のチェック -->
+<section id="tab-after">
+  <div class="card">
+    <h2>動画を選ぶ</h2>
+    <label class="file" id="dropzone"><input type="file" id="file" accept="video/*"><b>タップして動画を選ぶ</b><br>撮ったばかりのスロー動画（試しは左右2〜3本の短いもの）</label>
+    <label class="row">撮影したときの設定
+      <select id="shotMode">
+        <option value="slow">スロー撮影（120fps以上）</option>
+        <option value="normal">ふつうの撮影（30/60fps）</option>
+        <option value="unknown">わからない</option>
+      </select></label>
+    <label class="row">蹴りの予定本数 <input type="number" id="expected" min="1" max="60" value="6"></label>
+    <label class="row">調べ方
+      <select id="rate">
+        <option value="0.25">ていねい（動画の約4倍の時間）</option>
+        <option value="0.5">はやめ（約2倍の時間）</option>
+      </select></label>
+    <label class="row">骨格モデル
+      <select id="modelAfter">
+        <option value="full">標準（full・おすすめ）</option>
+        <option value="lite">軽い（lite・古い端末向け）</option>
+        <option value="heavy">重い（heavy・精度重視・30MB）</option>
+      </select></label>
+    <button class="btn" id="analyzeBtn" disabled>調べる</button>
+    <div id="progress" class="hidden">
+      <div class="bar"><i id="barFill"></i></div>
+      <div class="small" id="progressText">準備中…</div>
+    </div>
+  </div>
+
+  <div class="stage hidden" id="afterStage"><video id="afterVideo" playsinline muted preload="auto"></video><canvas class="ov" id="afterOv"></canvas></div>
+  <div style="height:14px"></div>
+
+  <div id="result" class="hidden">
+    <div class="verdict" id="verdict"></div>
+    <div class="card"><h2>チェック結果</h2><ul class="checks" id="checkList"></ul></div>
+    <div class="card"><h2>蹴りごと（足がいちばん上がったあたりのコマ）</h2>
+      <p class="small">骨格の線が蹴り足の先まで伸びていれば OK。両足の線が軸足の上に重なっていたら「見失い」。</p>
+      <div class="kicks" id="kickGrid"></div></div>
+    <div class="card"><h2>動画の情報</h2><table class="meta" id="metaTable"></table></div>
+    <p class="small">⚠ この端末の軽いモデルで OK でも、PC の分析（YOLO）で足が取れるとは限りません。<b>最初の1本は PC でも確認</b>します。</p>
+  </div>
+</section>
+
+<!-- ① 撮る前の位置合わせ -->
+<section id="tab-live" class="hidden">
+  <div class="card">
+    <h2>カメラで立ち位置を合わせる</h2>
+    <p class="small" style="margin:0">スマホを<b>横向き</b>にして、撮るときと同じ場所に置きます。構えて立つと、全身が入っているか・大きさ・横向きか・明るさを判定します。<br>OK が出たら<b>カメラアプリに切り替えてスロー撮影</b>（ブラウザではスロー撮影できません）。</p>
+    <button class="btn" id="liveStart">カメラを起動</button>
+    <button class="btn secondary hidden" id="liveStop">止める</button>
+  </div>
+  <div class="stage hidden" id="liveStage">
+    <video id="liveVideo" playsinline muted autoplay></video>
+    <canvas class="ov" id="liveOv"></canvas>
+    <div class="live-status v-warn" id="liveStatus">判定中…</div>
+  </div>
+  <div style="height:14px"></div>
+  <div class="card hidden" id="liveCard"><h2>いまの判定</h2><ul class="checks" id="liveList"></ul>
+    <p class="small">※ カメラアプリのスロー撮影は、機種によって<b>画角が少し狭く</b>なります。ここで OK でも上下左右に少し余裕を。</p></div>
+</section>
+
+<details class="card">
+  <summary>撮影の決まり</summary>
+  <ul>
+    <li>横から1台（三脚かどこかに固定）・スマホは横向き</li>
+    <li>左右8本ずつ。足を替えるときは体ごと向きを替える</li>
+    <li>最初に1秒以上、構えて止まる</li>
+    <li>1080p・スロー 120fps 以上・明るい場所（足先のブレを減らすため）</li>
+    <li>蹴った足が画面の端から出ないよう、左右に余白（身長の半分くらい）</li>
+    <li>試しは左右2〜3本の短い動画で</li>
+  </ul>
+</details>
+</main>
+
+<script type="module">
+// ---------------------------------------------------------------------------
+// 骨格モデル（MediaPipe Pose Landmarker）。動画・カメラ映像はどこにも送らない。
+// ネットを使うのは、ライブラリとモデルの重みの読み込みだけ。
+// ---------------------------------------------------------------------------
+const MP_VER = "0.10.14";
+const MP_URL = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VER}`;
+const MODEL_URL = n => `https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_${n}/float16/1/pose_landmarker_${n}.task`;
+
+let vision = null, fileset = null;
+const landmarkers = {};
+let tsCounter = 0;                      // detectForVideo は単調増加のタイムスタンプが必要
+function nextTs(stepMs = 1) { tsCounter += Math.max(1, Math.round(stepMs)); return tsCounter; }
+
+async function getLandmarker(name) {
+  if (landmarkers[name]) return landmarkers[name];
+  if (!vision) vision = await import(MP_URL);
+  if (!fileset) fileset = await vision.FilesetResolver.forVisionTasks(`${MP_URL}/wasm`);
+  const make = delegate => vision.PoseLandmarker.createFromOptions(fileset, {
+    baseOptions: { modelAssetPath: MODEL_URL(name), delegate },
+    runningMode: "VIDEO", numPoses: 1,
+    minPoseDetectionConfidence: 0.4, minPosePresenceConfidence: 0.4, minTrackingConfidence: 0.4,
+  });
+  try { landmarkers[name] = await make("GPU"); }
+  catch (e) { console.warn("GPU 不可→CPU", e); landmarkers[name] = await make("CPU"); }
+  return landmarkers[name];
+}
+
+// ---------------------------------------------------------------------------
+// 共通：骨格まわりの計算
+// p = [[x,y,vis], ...]（0〜1 の正規化座標） / vw,vh = 画素数
+// ---------------------------------------------------------------------------
+const EDGES = [[11,12],[11,23],[12,24],[23,24],[11,13],[13,15],[12,14],[14,16],[23,25],[25,27],[24,26],[26,28],[27,29],[29,31],[27,31],[28,30],[30,32],[28,32]];
+const med = a => { const b = a.filter(Number.isFinite).sort((x,y)=>x-y); if (!b.length) return NaN; const m = b.length>>1; return b.length%2 ? b[m] : (b[m-1]+b[m])/2; };
+const pct = (a, q) => { const b = a.filter(Number.isFinite).sort((x,y)=>x-y); if (!b.length) return NaN; return b[Math.min(b.length-1, Math.max(0, Math.round(q*(b.length-1))))]; };
+
+function framing(p, vw, vh) {
+  const X = i => p[i][0]*vw, Y = i => p[i][1]*vh;
+  const noseY = Y(0);
+  const shMidX = (X(11)+X(12))/2, shMidY = (Y(11)+Y(12))/2;
+  const hipMidX = (X(23)+X(24))/2, hipMidY = (Y(23)+Y(24))/2;
+  const headTop = noseY - 0.9*Math.max(1, shMidY - noseY);
+  let footBottom = -Infinity;
+  for (let i = 27; i <= 32; i++) footBottom = Math.max(footBottom, Y(i));
+  const bodyH = Math.max(1, footBottom - headTop);
+  let minX = Infinity, maxX = -Infinity;
+  for (let i = 0; i < 33; i++) { minX = Math.min(minX, X(i)); maxX = Math.max(maxX, X(i)); }
+  const torso = Math.hypot(shMidX - hipMidX, shMidY - hipMidY);
+  const sideRatio = Math.abs(X(11) - X(12)) / Math.max(1, torso);   // 横向きほど小さい
+  return { headTop, footBottom, bodyH, size: bodyH / vh, minX, maxX, centerX: hipMidX, hipMidY, sideRatio };
+}
+
+// 画面の明るさ（0〜255）
+const lumaCanvas = document.createElement("canvas"); lumaCanvas.width = 32; lumaCanvas.height = 18;
+const lumaCtx = lumaCanvas.getContext("2d", { willReadFrequently: true });
+function luma(src) {
+  lumaCtx.drawImage(src, 0, 0, 32, 18);
+  const d = lumaCtx.getImageData(0, 0, 32, 18).data; let s = 0;
+  for (let i = 0; i < d.length; i += 4) s += 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
+  return s / (d.length/4);
+}
+
+function drawSkeleton(ctx, p, w, h, color = "#39d353", lostColor = null) {
+  if (!p) return;
+  ctx.lineWidth = Math.max(2, w/320); ctx.lineCap = "round";
+  for (const [a, b] of EDGES) {
+    const leg = a >= 23 && b >= 25;
+    ctx.strokeStyle = leg && lostColor ? lostColor : color;
+    ctx.beginPath(); ctx.moveTo(p[a][0]*w, p[a][1]*h); ctx.lineTo(p[b][0]*w, p[b][1]*h); ctx.stroke();
+  }
+  ctx.fillStyle = "#fff";
+  for (const i of [0,11,12,23,24,25,26,27,28]) { ctx.beginPath(); ctx.arc(p[i][0]*w, p[i][1]*h, Math.max(2.5, w/220), 0, 7); ctx.fill(); }
+}
+
+// 位置合わせの判定（ライブ・動画で共用）
+function judgeFraming(f, vw, vh, lum) {
+  const items = [];
+  const add = (level, title, msg) => items.push({ level, title, msg });
+  if (vw < vh) add("warn", "スマホの向き", "縦向きです → スマホを横向きにすると、蹴りの余白が取りやすい");
+  const headOk = f.headTop > 0.015*vh, footOk = f.footBottom < 0.985*vh;
+  if (headOk && footOk) add("ok", "全身が入っている", "頭も足も画面の中");
+  else if (!headOk && !footOk) add("ng", "頭と足が切れている", "もう少し下がって（カメラから離れて）");
+  else if (!headOk) add("ng", "頭が切れている", "カメラを少し上へ向けるか、下がって");
+  else add("ng", "足が切れている", "カメラを少し下へ向けるか、下がって");
+  const sz = f.size;
+  if (sz < 0.38) add("warn", `小さい（画面の高さの ${Math.round(sz*100)}%）`, "もう少し近づいて（目安 45〜80%）");
+  else if (sz > 0.8) add("ng", `大きすぎ（画面の高さの ${Math.round(sz*100)}%）`, "下がって。蹴り足が画面から出ます（目安 45〜80%）");
+  else add("ok", `大きさ OK（画面の高さの ${Math.round(sz*100)}%）`, "目安 45〜80%");
+  const need = 0.55*f.bodyH;                     // 蹴り足が届く距離 ≒ 身長の半分
+  const left = f.centerX, right = vw - f.centerX;
+  if (left >= need && right >= need) add("ok", "左右の余白 OK", "向きを替えて蹴っても足が画面に収まる");
+  else if (left < need && right < need) add("ng", "左右の余白が足りない", "下がって（蹴り足が画面の端から出ます）");
+  else add("warn", `画面の${left < need ? "左" : "右"}に寄りすぎ`, "体が画面の真ん中に来るように");
+  const r = f.sideRatio;
+  if (r < 0.5) add("ok", "横向き OK", `肩の見え幅 ${r.toFixed(2)}（構えの斜めは OK）`);
+  else if (r < 0.75) add("warn", `少し正面寄り（肩の見え幅 ${r.toFixed(2)}）`, "カメラに対して横向きに構える");
+  else add("ng", "正面を向いている", "カメラに対して真横を向いて構える");
+  if (Number.isFinite(lum)) {
+    if (lum < 60) add("ng", "暗い", "明るい場所へ（暗いと足先がブレます）");
+    else if (lum < 95) add("warn", "やや暗い", "できれば明るい場所・照明の下で");
+    else if (lum > 225) add("warn", "明るすぎ", "逆光や白飛びに注意");
+    else add("ok", "明るさ OK", `平均 ${Math.round(lum)}`);
+  }
+  return items;
+}
+
+function renderChecks(ul, items) {
+  ul.innerHTML = "";
+  const sym = { ok: "○", warn: "△", ng: "×", na: "－" };
+  for (const it of items) {
+    const li = document.createElement("li");
+    li.innerHTML = `<div class="mk ${it.level}">${sym[it.level]}</div><div class="ck"><b></b><span></span></div>`;
+    li.querySelector("b").textContent = it.title;
+    li.querySelector("span").textContent = it.msg;
+    ul.appendChild(li);
+  }
+}
+const worst = items => items.some(i => i.level === "ng") ? "ng" : items.some(i => i.level === "warn") ? "warn" : "ok";
+
+// ---------------------------------------------------------------------------
+// タブ
+// ---------------------------------------------------------------------------
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
+  document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("on", x === b));
+  document.getElementById("tab-after").classList.toggle("hidden", b.dataset.tab !== "after");
+  document.getElementById("tab-live").classList.toggle("hidden", b.dataset.tab !== "live");
+  if (b.dataset.tab !== "live") stopLive();
+});
+
+// ---------------------------------------------------------------------------
+// ② 撮った動画を調べる
+// ---------------------------------------------------------------------------
+const $ = id => document.getElementById(id);
+const video = $("afterVideo"), ov = $("afterOv"), ovCtx = ov.getContext("2d");
+let fileInfo = null;
+let frames_last = null;   // スキャン中に骨格を重ねて見せる用
+
+$("file").onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  if (video.src) URL.revokeObjectURL(video.src);
+  video.src = URL.createObjectURL(f);
+  fileInfo = { name: f.name, size: f.size };
+  $("dropzone").querySelector("b").textContent = f.name;
+  $("afterStage").classList.remove("hidden");
+  $("result").classList.add("hidden");
+  video.onloadedmetadata = () => { ov.width = video.videoWidth; ov.height = video.videoHeight; $("analyzeBtn").disabled = false; };
+};
+
+const waitEvent = (el, ev) => new Promise(r => el.addEventListener(ev, r, { once: true }));
+async function seek(t) { if (Math.abs(video.currentTime - t) < 1e-4) return; const p = waitEvent(video, "seeked"); video.currentTime = t; await p; }
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// ファイルの fps を測る：ゆっくり再生して、表示されたコマの時刻の間隔を見る
+async function measureFps() {
+  if (!("requestVideoFrameCallback" in HTMLVideoElement.prototype)) return NaN;
+  await seek(0);
+  const times = [];
+  video.playbackRate = 0.125;
+  await new Promise(resolve => {
+    const t0 = performance.now();
+    const cb = (now, meta) => {
+      times.push(meta.mediaTime);
+      if (times.length >= 36 || performance.now() - t0 > 4500 || video.ended) resolve();
+      else video.requestVideoFrameCallback(cb);
+    };
+    video.requestVideoFrameCallback(cb);
+    video.play();
+    setTimeout(resolve, 6000);          // コマが届かない（画面が裏に回った等）ときの保険
+  });
+  video.pause();
+  const d = [];
+  for (let i = 1; i < times.length; i++) { const x = times[i] - times[i-1]; if (x > 0.0008) d.push(x); }
+  if (d.length < 3) return NaN;
+  const mn = Math.min(...d);
+  const base = med(d.filter(x => x < mn*1.5));
+  let fps = 1/base;
+  for (const c of [24,25,30,48,50,60,90,100,120,240,480,960]) if (Math.abs(fps - c)/c < 0.08) { fps = c; break; }
+  return fps;
+}
+
+// 1コマごとの処理：骨格・明るさ
+function grabFrame(lm, t, vw, vh, frames, stepMs) {
+  const r = lm.detectForVideo(video, nextTs(stepMs));
+  const f = { t, lum: NaN };
+  if (frames.length % 6 === 0) f.lum = luma(video);
+  const L = r.landmarks && r.landmarks[0];
+  if (L) {
+    f.p = L.map(q => [q.x, q.y, q.visibility ?? 1]);
+  }
+  frames.push(f);
+  frames_last = f;
+}
+
+async function scanVideo(lm, rate, onProgress) {
+  const vw = video.videoWidth, vh = video.videoHeight, dur = video.duration;
+  const frames = [];
+  await seek(0);
+  video.playbackRate = rate;
+  if ("requestVideoFrameCallback" in HTMLVideoElement.prototype) {
+    await new Promise(resolve => {
+      let last = -1;
+      const cb = (now, meta) => {
+        const t = meta.mediaTime;
+        if (t > last) { grabFrame(lm, t, vw, vh, frames, last < 0 ? 33 : (t-last)*1000); last = t; onProgress(t/dur); }
+        if (!video.ended) video.requestVideoFrameCallback(cb);
+      };
+      video.requestVideoFrameCallback(cb);
+      video.onended = resolve;
+      video.play();
+    });
+  } else {
+    // 古いブラウザ：1/30秒ずつ飛ばして調べる
+    for (let t = 0; t < dur; t += 1/30) { await seek(t); grabFrame(lm, t, vw, vh, frames, 33); onProgress(t/dur); }
+  }
+  video.onended = null;
+  return frames;
+}
+
+// 蹴りを探す：左右の膝の高さの差（ラベルの左右には頼らない）
+function findKicks(frames, Href, vh, mergeGap, minDur) {
+  const kd = frames.map(f => f.p ? Math.abs(f.p[25][1] - f.p[26][1])*vh/Href : NaN);
+  const sm = kd.map((_, i) => med([kd[i-1], kd[i], kd[i+1]]));
+  const segs = []; let cur = null;
+  sm.forEach((v, i) => {
+    if (!cur && v > 0.12) cur = { a: i, b: i };
+    else if (cur) { if (v > 0.06 || !Number.isFinite(v)) cur.b = i; else { segs.push(cur); cur = null; } }
+  });
+  if (cur) segs.push(cur);
+  const merged = [];
+  for (const s of segs) {
+    const prev = merged[merged.length-1];
+    if (prev && frames[s.a].t - frames[prev.b].t < mergeGap) prev.b = s.b; else merged.push({ ...s });
+  }
+  return { kd: sm, kicks: merged.filter(s => frames[s.b].t - frames[s.a].t >= minDur && Math.max(...sm.slice(s.a, s.b+1).filter(Number.isFinite)) > 0.18) };
+}
+
+$("analyzeBtn").onclick = async () => {
+  const btn = $("analyzeBtn"); btn.disabled = true;
+  $("progress").classList.remove("hidden"); $("result").classList.add("hidden");
+  const setP = (r, text) => { $("barFill").style.width = `${Math.round(r*100)}%`; $("progressText").textContent = text; };
+  try {
+    setP(0, "骨格モデルを読み込み中…（初回は少し時間がかかります）");
+    const lm = await getLandmarker($("modelAfter").value);
+    setP(0, "fps を測っています…");
+    const fps = await measureFps();
+    const rate = +$("rate").value;
+    const t0 = performance.now();
+    const frames = await scanVideo(lm, rate, r => {
+      const el = (performance.now() - t0)/1000, rest = r > 0.02 ? el*(1-r)/r : NaN;
+      setP(r, `調べています… ${Math.round(r*100)}%${Number.isFinite(rest) ? `（あと約${Math.ceil(rest)}秒）` : ""}`);
+      const f = frames_last; if (f && f.p) { ovCtx.clearRect(0,0,ov.width,ov.height); drawSkeleton(ovCtx, f.p, ov.width, ov.height); }
+    });
+    setP(1, "まとめています…");
+    await buildReport(frames, fps);
+    setP(1, `完了（${frames.length} コマを調べました）`);
+  } catch (e) {
+    console.error(e); setP(0, `エラー: ${e.message || e}`);
+  } finally { btn.disabled = false; }
+};
+
+async function buildReport(frames, fps) {
+  const vw = video.videoWidth, vh = video.videoHeight, dur = video.duration;
+  const withP = frames.filter(f => f.p);
+  const items = [];
+  const add = (level, title, msg) => items.push({ level, title, msg });
+  const detRate = withP.length / Math.max(1, frames.length);
+
+  if (withP.length < 10) {
+    add("ng", "人が見つからない", "全身が映っているか、明るさを確認してください");
+    return showReport(items, [], { vw, vh, dur, fps, S: 1, frames });
+  }
+  const fr = withP.map(f => framing(f.p, vw, vh));
+  const Href = med(fr.map(x => x.bodyH));
+
+  // 蹴り：まず短い間隔でまとめ → 長さから「引き伸ばしスロー」かを推定 → まとめ直す
+  let { kicks } = findKicks(frames, Href, vh, 0.15, 0.08);
+  const rawDur = med(kicks.map(s => frames[s.b].t - frames[s.a].t));
+  let S = 1;
+  if (fps <= 65 && rawDur > 1.3) S = Math.max(2, Math.round(rawDur / 0.55));
+  const res = findKicks(frames, Href, vh, 0.2*S, 0.12*S);
+  kicks = res.kicks; const kd = res.kd;
+  const realFps = Number.isFinite(fps) ? fps*S : NaN;
+  const mode = $("shotMode").value;
+
+  // fps
+  if (!Number.isFinite(fps)) add("na", "fps が測れない", "このブラウザでは測れません（Chrome で開くと測れます）");
+  else if (S > 1) add("warn", `引き伸ばし保存（実際は約 ${realFps}fps 相当）`,
+      `ファイルは ${fps}fps ですが、蹴りの長さから約 ${S} 倍スローで保存されています。分析には使えますが、PC で分析するときに「${S}倍スロー」と伝えてください`);
+  else if (realFps >= 100) add("ok", `${fps}fps（スロー撮影できています）`, "ブレにくい撮り方です");
+  else if (realFps >= 50) add(mode === "slow" ? "ng" : "warn", `${fps}fps（スローではない）`,
+      mode === "slow" ? "スロー撮影のつもりが 60fps 以下で保存されています。カメラの設定を確認" : "足先がブレやすいので、スロー撮影（120fps 以上）がおすすめ");
+  else add("ng", `${fps}fps（少ない）`, "足先がブレます。スロー撮影（120fps 以上）で撮り直しを");
+
+  // 解像度
+  const short = Math.min(vw, vh);
+  if (short >= 1080) add("ok", `解像度 ${vw}×${vh}`, short > 1440 ? "十分（4K は PC の処理が遅いので 1080p で足ります）" : "十分");
+  else if (short >= 720) add("warn", `解像度 ${vw}×${vh}`, "使えますが、できれば 1080p で");
+  else add("ng", `解像度 ${vw}×${vh}`, "低すぎます。1080p で");
+
+  // 位置合わせ（構えているコマの中央値）＋ 切れているコマの割合
+  const stance = withP.map((f, i) => ({ f, x: fr[i], k: kd[frames.indexOf(f)] })).filter(o => !(o.k > 0.06));
+  const base = stance.length ? stance : withP.map((f, i) => ({ f, x: fr[i] }));
+  const mf = {
+    headTop: med(base.map(o => o.x.headTop)), footBottom: med(base.map(o => o.x.footBottom)), bodyH: Href,
+    size: Href / vh, centerX: med(base.map(o => o.x.centerX)), sideRatio: med(base.map(o => o.x.sideRatio)),
+  };
+  const lum = med(frames.map(f => f.lum));
+  items.push(...judgeFraming(mf, vw, vh, lum).filter(i => !(i.title.startsWith("左右の余白") || i.title.startsWith("画面の"))));
+  // 蹴り中に体（足先）が画面の端から出たか
+  const outFrames = withP.filter((f, i) => fr[i].minX < 0.005*vw || fr[i].maxX > 0.995*vw || fr[i].headTop < 0 || fr[i].footBottom > vh).length;
+  if (outFrames / withP.length > 0.03) add("warn", "画面からはみ出すコマがある", `全体の ${Math.round(outFrames/withP.length*100)}%。下がるか、体を画面の真ん中に`);
+  else add("ok", "画面からはみ出さない", "蹴っても体が画面に収まっている");
+  if (detRate < 0.9) add("warn", `骨格が取れないコマが ${Math.round((1-detRate)*100)}%`, "明るさ・人の重なり・服の色（背景と同じ色）を確認");
+
+  // 最初の構え
+  const firstP = withP[0].t;
+  const firstKick = kicks.length ? frames[kicks[0].a].t : dur;
+  const stanceSec = (firstKick - Math.max(0, firstP)) / S;
+  if (firstP > 0.5*S) add("warn", "最初は人が映っていない", "構えた状態から撮り始めると、分析が安定します");
+  if (stanceSec >= 1) add("ok", `最初の構え ${stanceSec.toFixed(1)} 秒`, "1秒以上あり OK");
+  else add("warn", `最初の構え ${stanceSec.toFixed(1)} 秒`, "最初に1秒以上、構えて止まってください");
+
+  // 蹴りごと：足がいちばん上がったあたりで、蹴り足を見失っていないか・ブレ
+  const kickInfo = kicks.map((s, n) => {
+    const idx = []; for (let i = s.a; i <= s.b; i++) if (frames[i].p) idx.push(i);
+    const kmax = Math.max(...idx.map(i => kd[i]).filter(Number.isFinite));
+    const top = idx.filter(i => kd[i] >= 0.7*kmax);
+    const sep = i => { const p = frames[i].p; return Math.hypot((p[27][0]-p[28][0])*vw, (p[27][1]-p[28][1])*vh) / Href; };
+    const lift = i => { const p = frames[i].p; return Math.abs(p[27][1]-p[28][1])*vh / Href; };
+    const okFrac = top.filter(i => sep(i) >= 0.2).length / Math.max(1, top.length);
+    const maxLift = Math.max(...idx.map(lift));
+    const tracked = okFrac >= 0.7 && maxLift >= 0.25;
+    // サムネイル：見失っていればその瞬間、取れていれば足首がいちばん上がったコマ
+    let pick = top[0] ?? idx[0];
+    if (!tracked) { let m = Infinity; for (const i of top) if (sep(i) < m) { m = sep(i); pick = i; } }
+    else { let m = -1; for (const i of idx) if (lift(i) > m) { m = lift(i); pick = i; } }
+    return { n: n+1, t0: frames[s.a].t, t1: frames[s.b].t, top: top.length, okFrac, maxLift, tracked, pick };
+  });
+
+  const exp = +$("expected").value;
+  if (!kicks.length) add("ng", "蹴りが見つからない", "膝が上がる蹴りが検出できませんでした");
+  else if (kicks.length === exp) add("ok", `蹴り ${kicks.length} 本`, "予定どおり");
+  else add("warn", `蹴り ${kicks.length} 本（予定 ${exp} 本）`, "1本が2本に割れた／取りこぼした可能性。下の一覧で確認");
+
+  if (kickInfo.length) {
+    const nT = kickInfo.filter(k => k.tracked).length, ratio = nT / kickInfo.length;
+    const sparse = kickInfo.filter(k => k.top < 3).length;
+    const lvl = ratio >= 0.85 ? "ok" : ratio >= 0.6 ? "warn" : "ng";
+    add(lvl, `足がいちばん上がったところで蹴り足が取れた：${nT}/${kickInfo.length} 本`,
+      lvl === "ok" ? "今回いちばん大事なところ。OK" : "取れなかった蹴りは、両足首が軸足の上に重なっています（足先のブレが原因の見込み）。明るく・スローで撮り直しを");
+    if (sparse) add("warn", `頂点付近のコマが少ない蹴りが ${sparse} 本`, "「ていねい」で調べ直すと確実です");
+    const kdur = med(kickInfo.map(k => (k.t1 - k.t0)/S));
+    if (Number.isFinite(kdur) && S === 1 && fps >= 100 && kdur > 1.3) add("warn", "蹴りが長く見える", `1本 ${kdur.toFixed(1)} 秒。スロー区間だけ引き伸ばされているかもしれません`);
+  }
+  await showReport(items, kickInfo, { vw, vh, dur, fps, S, frames, realFps });
+}
+
+async function showReport(items, kickInfo, m) {
+  const v = worst(items.filter(i => i.level !== "na"));
+  const el = $("verdict");
+  el.className = `verdict v-${v}`;
+  el.innerHTML = v === "ok" ? "この撮り方で OK<small>PC で分析に回せます（最初の1本は PC でも確認）</small>"
+    : v === "warn" ? "使えますが、注意点があります<small>△ の項目を見て、次の撮影で直せるものは直してください</small>"
+    : "撮り直しをおすすめします<small>× の項目を直してから撮り直してください</small>";
+  renderChecks($("checkList"), items);
+
+  const grid = $("kickGrid"); grid.innerHTML = "";
+  if (!kickInfo.length) grid.innerHTML = `<p class="small">蹴りは見つかりませんでした。</p>`;
+  for (const k of kickInfo) {
+    const f = m.frames[k.pick];
+    await seek(f.t);
+    const c = document.createElement("canvas");
+    const w = 360, h = Math.round(w * m.vh / m.vw); c.width = w; c.height = h;
+    const ctx = c.getContext("2d");
+    ctx.drawImage(video, 0, 0, w, h);
+    drawSkeleton(ctx, f.p, w, h, k.tracked ? "#39d353" : "#39d353", k.tracked ? null : "#ff4d4d");
+    const box = document.createElement("div"); box.className = "kick";
+    const info = document.createElement("div");
+    info.innerHTML = `<div class="ttl">${k.n}本目 ${k.tracked ? "○ 取れた" : "× 見失い"}</div>
+      ${(k.t0).toFixed(2)}〜${(k.t1).toFixed(2)} 秒（動画の時刻）<br>
+      足首の上がり ${k.maxLift.toFixed(2)}H・頂点 ${k.top} コマ`;
+    box.append(c, info); grid.appendChild(box);
+  }
+
+  const mb = fileInfo ? (fileInfo.size/1048576).toFixed(1) : "?";
+  $("metaTable").innerHTML = [
+    ["ファイル", fileInfo?.name ?? ""], ["大きさ", `${mb} MB`],
+    ["解像度", `${m.vw}×${m.vh}`], ["長さ（再生時間）", `${m.dur.toFixed(1)} 秒`],
+    ["ファイルの fps", Number.isFinite(m.fps) ? `${m.fps}` : "測れず"],
+    ["スロー倍率（推定）", m.S > 1 ? `約 ${m.S} 倍（引き伸ばし保存）` : "なし（等速で保存）"],
+    ["実際の撮影 fps（推定）", Number.isFinite(m.realFps) ? `${m.realFps}` : "－"],
+    ["調べたコマ数", `${m.frames.length}`],
+  ].map(([a, b]) => `<tr><td>${a}</td><td>${String(b).replace(/[<>&]/g, "")}</td></tr>`).join("");
+  $("result").classList.remove("hidden");
+  $("result").scrollIntoView({ behavior: "smooth", block: "start" });
+  window.__checkResult = { items, kickInfo: kickInfo.map(({ pick, ...k }) => k), fps: m.fps, S: m.S };
+}
+
+
+// ---------------------------------------------------------------------------
+// ① 撮る前の位置合わせ（ライブ）
+// ---------------------------------------------------------------------------
+const liveVideo = $("liveVideo"), liveOv = $("liveOv"), liveCtx = liveOv.getContext("2d");
+let stream = null, liveRaf = 0, okSince = 0, buzzed = false;
+
+async function startLive() {
+  $("liveStart").disabled = true; $("liveStart").textContent = "起動中…";
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: false,
+      video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } } });
+    liveVideo.srcObject = stream; await liveVideo.play();
+    $("liveStage").classList.remove("hidden"); $("liveCard").classList.remove("hidden");
+    $("liveStatus").textContent = "骨格モデルを読み込み中…";
+    const lm = await getLandmarker("lite");
+    $("liveStart").classList.add("hidden"); $("liveStop").classList.remove("hidden");
+    let lastT = -1, n = 0, lum = NaN;
+    const loop = () => {
+      if (!stream) return;
+      const vw = liveVideo.videoWidth, vh = liveVideo.videoHeight;
+      if (vw && liveVideo.currentTime !== lastT) {
+        lastT = liveVideo.currentTime;
+        if (liveOv.width !== vw) { liveOv.width = vw; liveOv.height = vh; }
+        if (n++ % 15 === 0) lum = luma(liveVideo);
+        const r = lm.detectForVideo(liveVideo, nextTs(33));
+        const L = r.landmarks && r.landmarks[0];
+        liveCtx.clearRect(0, 0, vw, vh);
+        // 頭・足が入るべき帯
+        liveCtx.strokeStyle = "rgba(255,255,255,.5)"; liveCtx.setLineDash([12, 10]); liveCtx.lineWidth = 2;
+        for (const y of [0.015*vh, 0.985*vh]) { liveCtx.beginPath(); liveCtx.moveTo(0, y); liveCtx.lineTo(vw, y); liveCtx.stroke(); }
+        liveCtx.setLineDash([]);
+        let items;
+        if (!L) items = [{ level: "ng", title: "人が見つからない", msg: "全身が映る位置に立って、構えてください" }];
+        else {
+          const p = L.map(q => [q.x, q.y, q.visibility ?? 1]);
+          drawSkeleton(liveCtx, p, vw, vh);
+          items = judgeFraming(framing(p, vw, vh), vw, vh, lum);
+        }
+        renderChecks($("liveList"), items);
+        const w = worst(items), st = $("liveStatus");
+        const now = performance.now();
+        if (w === "ok") { if (!okSince) okSince = now; } else { okSince = 0; buzzed = false; }
+        const stable = okSince && now - okSince > 1500;
+        st.className = `live-status v-${stable ? "ok" : w === "ng" ? "ng" : "warn"}`;
+        st.textContent = stable ? "OK！ この位置でカメラアプリに切り替えてスロー撮影"
+          : (items.find(i => i.level === "ng") || items.find(i => i.level === "warn") || { msg: "そのまま…" }).msg;
+        if (stable && !buzzed) { buzzed = true; navigator.vibrate?.(200); }
+      }
+      liveRaf = requestAnimationFrame(loop);
+    };
+    loop();
+  } catch (e) {
+    console.error(e);
+    alert(`カメラを起動できませんでした：${e.message || e}\n（https で開いているか、カメラの許可を確認）`);
+    stopLive();
+  } finally { $("liveStart").disabled = false; $("liveStart").textContent = "カメラを起動"; }
+}
+function stopLive() {
+  cancelAnimationFrame(liveRaf);
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  stream = null; okSince = 0; buzzed = false;
+  $("liveStart").classList.remove("hidden"); $("liveStop").classList.add("hidden");
+  $("liveStage").classList.add("hidden"); $("liveCard").classList.add("hidden");
+}
+$("liveStart").onclick = startLive;
+$("liveStop").onclick = stopLive;
+document.addEventListener("visibilitychange", () => { if (document.hidden) stopLive(); });
+</script>
+</body>
+</html>
