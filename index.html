@@ -140,6 +140,7 @@ table.meta td:last-child{text-align:right;font-variant-numeric:tabular-nums}
     <p class="small" style="margin:0">スマホを<b>横向き</b>にして、撮るときと同じ場所に置きます。構えて立つと、全身が入っているか・大きさ・横向きか・明るさを判定します。<br>OK が出たら<b>カメラアプリに切り替えて撮影</b>（ふつうの動画・1080p・60fps）。</p>
     <button class="btn" id="liveStart">カメラを起動</button>
     <button class="btn secondary hidden" id="liveStop">止める</button>
+    <select id="camSel" class="hidden" style="margin-top:8px;max-width:100%"></select>
   </div>
   <div class="stage hidden" id="liveStage">
     <video id="liveVideo" playsinline muted autoplay></video>
@@ -568,12 +569,47 @@ async function showReport(items, kickInfo, m) {
 // ---------------------------------------------------------------------------
 const liveVideo = $("liveVideo"), liveOv = $("liveOv"), liveCtx = liveOv.getContext("2d");
 let stream = null, liveRaf = 0, okSince = 0, buzzed = false;
+document.addEventListener("change", async e => {
+  if (e.target.id !== "camSel" || !stream) return;
+  try { localStorage.setItem("tkdCam", e.target.value); } catch (_) {}
+  stopTracks(); stream = await openCam(e.target.value);
+  liveVideo.srcObject = stream; await liveVideo.play();
+});
+
+function camPref() { try { return localStorage.getItem("tkdCam") || ""; } catch (e) { return ""; } }
+function stopTracks() { if (stream) stream.getTracks().forEach(t => t.stop()); }
+function openCam(id) {
+  const v = { width: { ideal: 1920 }, height: { ideal: 1080 } };
+  if (id) v.deviceId = { exact: id }; else v.facingMode = { ideal: "environment" };
+  return navigator.mediaDevices.getUserMedia({ audio: false, video: v }).catch(e => {
+    if (id) { try { localStorage.removeItem("tkdCam"); } catch (_) {} return openCam(""); }
+    throw e;
+  });
+}
+async function backCams() {
+  const all = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === "videoinput");
+  const back = all.filter(d => /back|rear|背面|environment/i.test(d.label));
+  return back.length ? back : all;
+}
+function fillCamSel(list, cur) {
+  const sel = $("camSel");
+  if (list.length < 2) { sel.classList.add("hidden"); return; }
+  sel.innerHTML = list.map((d, i) => `<option value="${d.deviceId}">${/camera2 0/.test(d.label) ? "通常レンズ" : "カメラ " + (i + 1)}（${d.label || "名前なし"}）</option>`).join("");
+  sel.value = cur; sel.classList.remove("hidden");
+}
 
 async function startLive() {
   $("liveStart").disabled = true; $("liveStart").textContent = "起動中…";
   try {
-    stream = await navigator.mediaDevices.getUserMedia({ audio: false,
-      video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } } });
+    stream = await openCam(camPref());
+    // 「背面」だけだと超広角が選ばれる機種がある → 通常レンズ（Android は camera2 0）に切り替える
+    const backs = await backCams();
+    const cur = stream.getVideoTracks()[0].getSettings().deviceId;
+    if (!camPref() && backs.length > 1) {
+      const main = backs.find(d => /camera2 0/.test(d.label)) || backs[0];
+      if (main.deviceId !== cur) { stopTracks(); stream = await openCam(main.deviceId); }
+    }
+    fillCamSel(backs, stream.getVideoTracks()[0].getSettings().deviceId);
     liveVideo.srcObject = stream; await liveVideo.play();
     $("liveStage").classList.remove("hidden"); $("liveCard").classList.remove("hidden");
     $("liveStatus").textContent = "骨格モデルを読み込み中…";
