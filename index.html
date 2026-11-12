@@ -141,6 +141,7 @@ table.meta td:last-child{text-align:right;font-variant-numeric:tabular-nums}
     <button class="btn" id="liveStart">カメラを起動</button>
     <button class="btn secondary hidden" id="liveStop">止める</button>
     <select id="camSel" class="hidden" style="margin-top:8px;max-width:100%"></select>
+    <div class="small hidden" id="camInfo" style="margin-top:6px"></div>
   </div>
   <div class="stage hidden" id="liveStage">
     <video id="liveVideo" playsinline muted autoplay></video>
@@ -574,12 +575,13 @@ document.addEventListener("change", async e => {
   try { localStorage.setItem("tkdCam", e.target.value); } catch (_) {}
   stopTracks(); stream = await openCam(e.target.value);
   liveVideo.srcObject = stream; await liveVideo.play();
+  measureLiveFps();
 });
 
 function camPref() { try { return localStorage.getItem("tkdCam") || ""; } catch (e) { return ""; } }
 function stopTracks() { if (stream) stream.getTracks().forEach(t => t.stop()); }
 function openCam(id) {
-  const v = { width: { ideal: 1920 }, height: { ideal: 1080 } };
+  const v = { width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 60 } };
   if (id) v.deviceId = { exact: id }; else v.facingMode = { ideal: "environment" };
   return navigator.mediaDevices.getUserMedia({ audio: false, video: v }).catch(e => {
     if (id) { try { localStorage.removeItem("tkdCam"); } catch (_) {} return openCam(""); }
@@ -598,6 +600,37 @@ function fillCamSel(list, cur) {
   sel.value = cur; sel.classList.remove("hidden");
 }
 
+// いまの解像度・fps（設定値＝カメラの申告、実測＝実際に届いたコマ数）
+let fpsGen = 0, fpsReal = NaN;
+function showCamInfo() {
+  const el = $("camInfo");
+  if (!stream) { el.classList.add("hidden"); return; }
+  const t = stream.getVideoTracks()[0], s = t.getSettings();
+  const cap = t.getCapabilities ? t.getCapabilities() : {};
+  const max = cap.frameRate && cap.frameRate.max;
+  const real = isNaN(fpsReal) ? "測定中…" : Math.round(fpsReal) + "fps";
+  const good = !isNaN(fpsReal) && fpsReal >= 55 && Math.min(s.width, s.height) >= 1080;
+  el.innerHTML = `いまのカメラ：<b>${s.width}×${s.height}</b>・設定 ${s.frameRate ? Math.round(s.frameRate) : "?"}fps`
+    + `${max ? `（最大 ${Math.round(max)}）` : ""}・実測 <b>${real}</b>`
+    + (isNaN(fpsReal) ? "" : good ? " ✅ 1080p/60 OK" : " ⚠ 1080p/60 に届かず");
+  el.classList.remove("hidden");
+}
+function measureLiveFps() {
+  const gen = ++fpsGen; fpsReal = NaN; showCamInfo();
+  if (!liveVideo.requestVideoFrameCallback) return;
+  let t0 = 0, f0 = 0;
+  const cb = (now, md) => {
+    if (!stream || gen !== fpsGen) return;
+    if (!t0) { t0 = now; f0 = md.presentedFrames; }
+    else if (now - t0 >= 2000) {
+      fpsReal = (md.presentedFrames - f0) * 1000 / (now - t0);
+      t0 = now; f0 = md.presentedFrames; showCamInfo();
+    }
+    liveVideo.requestVideoFrameCallback(cb);
+  };
+  liveVideo.requestVideoFrameCallback(cb);
+}
+
 async function startLive() {
   $("liveStart").disabled = true; $("liveStart").textContent = "起動中…";
   try {
@@ -611,6 +644,7 @@ async function startLive() {
     }
     fillCamSel(backs, stream.getVideoTracks()[0].getSettings().deviceId);
     liveVideo.srcObject = stream; await liveVideo.play();
+    measureLiveFps();
     $("liveStage").classList.remove("hidden"); $("liveCard").classList.remove("hidden");
     $("liveStatus").textContent = "骨格モデルを読み込み中…";
     const lm = await getLandmarker("lite");
@@ -659,7 +693,7 @@ async function startLive() {
 function stopLive() {
   cancelAnimationFrame(liveRaf);
   if (stream) stream.getTracks().forEach(t => t.stop());
-  stream = null; okSince = 0; buzzed = false;
+  stream = null; okSince = 0; buzzed = false; fpsGen++; showCamInfo();
   $("liveStart").classList.remove("hidden"); $("liveStop").classList.add("hidden");
   $("liveStage").classList.add("hidden"); $("liveCard").classList.add("hidden");
 }
