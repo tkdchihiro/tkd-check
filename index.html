@@ -596,7 +596,7 @@ async function backCams() {
 function fillCamSel(list, cur) {
   const sel = $("camSel");
   if (list.length < 2) { sel.classList.add("hidden"); return; }
-  sel.innerHTML = list.map((d, i) => `<option value="${d.deviceId}">${/camera2 0/.test(d.label) ? "通常レンズ" : "カメラ " + (i + 1)}（${d.label || "名前なし"}）</option>`).join("");
+  sel.innerHTML = list.map((d, i) => `<option value="${d.deviceId}">${/camera2? 0\b/.test(d.label) ? "通常レンズ" : "カメラ " + (i + 1)}（${d.label || "名前なし"}）</option>`).join("");
   sel.value = cur; sel.classList.remove("hidden");
 }
 
@@ -667,7 +667,7 @@ async function startLive() {
     const backs = await backCams();
     const cur = stream.getVideoTracks()[0].getSettings().deviceId;
     if (!camPref() && backs.length > 1) {
-      const main = backs.find(d => /camera2 0/.test(d.label)) || backs[0];
+      const main = backs.find(d => /camera2? 0\b/.test(d.label)) || backs[0];
       if (main.deviceId !== cur) { stopTracks(); stream = await openCam(main.deviceId); }
     }
     fillCamSel(backs, stream.getVideoTracks()[0].getSettings().deviceId);
