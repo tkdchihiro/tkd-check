@@ -75,12 +75,43 @@ details ul{padding-left:20px;font-size:14px;margin:8px 0 0}
 table.meta{width:100%;font-size:13px;border-collapse:collapse}
 table.meta td{padding:4px 0;border-top:1px solid var(--line)}
 table.meta td:last-child{text-align:right;font-variant-numeric:tabular-nums}
-</style>
+
+/* ===== variant c ===== */
+:root:root:root{--bg:#f4f1ea;--card:#fbfaf6;--ink:#151413;--sub:#6c675f;--line:#d9d3c7;--gold:#b8892b;
+  --ok:#0047a0;--ok-bg:#dfe8f5;--warn:#8a6414;--warn-bg:#f3e9cf;--ng:#c8102e;--ng-bg:#f7dfe2;--accent:#151413;--accent-ink:#f4f1ea}
+@media (prefers-color-scheme: dark){:root:root:root{--bg:#121110;--card:#1b1a18;--ink:#f4f1ea;--sub:#a29b8f;--line:#2f2c28;
+  --ok:#6fa3ec;--ok-bg:#16243a;--warn:#e0b45a;--warn-bg:#33280f;--ng:#ff5a6e;--ng-bg:#3a1418;--accent:#f4f1ea;--accent-ink:#121110}}
+html,body{font-family:"Zen Kaku Gothic New","Noto Sans JP",sans-serif}
+header{background:#151413;color:#f4f1ea;margin:0 -16px;padding:22px 16px 16px;border-bottom:4px solid var(--gold)}
+h1{font-size:15px;font-weight:700;letter-spacing:.3em;display:flex;align-items:baseline;gap:12px}
+h1 .en{font-family:"Bebas Neue",sans-serif;font-size:40px;font-weight:400;letter-spacing:.06em;line-height:.9}
+header .sub{color:#a29b8f;margin-top:8px}header .sub b{color:#f4f1ea}
+.tabs{gap:6px;margin:14px 0 14px}
+.tabs button{border-radius:2px;background:var(--card);border:1px solid var(--line);font-weight:900;letter-spacing:.05em}
+.tabs button.on{background:var(--ink);color:var(--bg);border-color:var(--ink);box-shadow:inset 0 -4px 0 var(--gold)}
+.card{border:0;border-left:6px solid var(--ink);border-radius:2px;background:var(--card);box-shadow:0 1px 0 var(--line)}
+.card h2{font-size:17px;font-weight:900;letter-spacing:.08em}
+select,input[type=number]{border-radius:2px}
+.btn{border-radius:2px;font-weight:900;letter-spacing:.15em;box-shadow:inset 0 -4px 0 var(--gold)}
+.btn.secondary{box-shadow:none}
+.file{border-radius:2px;border:1px dashed var(--sub)}
+.stage{border-radius:2px}
+.bar{border-radius:0;height:6px}.bar i{background:var(--ng)}
+.verdict{border-radius:2px;font-size:20px;font-weight:900;letter-spacing:.05em;border-left:10px solid currentColor}
+.mk{border-radius:2px;font-family:"Bebas Neue",sans-serif}
+.ck b{font-weight:900}
+.kick{border-radius:2px;border:0;background:var(--bg);border-top:3px solid var(--ink)}
+.kick .ttl{font-weight:900;letter-spacing:.05em}
+.live-status{border-radius:2px;font-weight:900;letter-spacing:.08em}
+table.meta td:last-child{font-family:"Bebas Neue","Zen Kaku Gothic New",sans-serif;font-size:17px;letter-spacing:.03em}
+details.card summary{font-weight:900;letter-spacing:.08em}
+
+</style><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap">
 </head>
 <body>
 <main>
 <header>
-  <h1>撮影チェック</h1>
+  <h1><span class="en">SHOT CHECK</span>撮影チェック</h1>
   <p class="sub">テコンドー分析用。動画は<b>この端末の中だけ</b>で調べます（外へ送りません）。骨格モデル（約5〜9MB）だけ初回に読み込みます。</p>
 </header>
 
