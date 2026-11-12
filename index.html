@@ -601,34 +601,62 @@ function fillCamSel(list, cur) {
 }
 
 // いまの解像度・fps（設定値＝カメラの申告、実測＝実際に届いたコマ数）
-let fpsGen = 0, fpsReal = NaN;
+let fpsGen = 0, fpsReal = NaN, fpsHow = "", fpsNote = "";
 function showCamInfo() {
   const el = $("camInfo");
   if (!stream) { el.classList.add("hidden"); return; }
   const t = stream.getVideoTracks()[0], s = t.getSettings();
   const cap = t.getCapabilities ? t.getCapabilities() : {};
   const max = cap.frameRate && cap.frameRate.max;
-  const real = isNaN(fpsReal) ? "測定中…" : Math.round(fpsReal) + "fps";
+  const real = !isNaN(fpsReal) ? `${Math.round(fpsReal)}fps` : fpsNote || "測定中…";
   const good = !isNaN(fpsReal) && fpsReal >= 55 && Math.min(s.width, s.height) >= 1080;
   el.innerHTML = `いまのカメラ：<b>${s.width}×${s.height}</b>・設定 ${s.frameRate ? Math.round(s.frameRate) : "?"}fps`
-    + `${max ? `（最大 ${Math.round(max)}）` : ""}・実測 <b>${real}</b>`
+    + `${max ? `（最大 ${Math.round(max)}）` : ""}<br>実測 <b>${real}</b>${fpsHow && !isNaN(fpsReal) ? `（${fpsHow}）` : ""}`
     + (isNaN(fpsReal) ? "" : good ? " ✅ 1080p/60 OK" : " ⚠ 1080p/60 に届かず");
   el.classList.remove("hidden");
 }
 function measureLiveFps() {
-  const gen = ++fpsGen; fpsReal = NaN; showCamInfo();
-  if (!liveVideo.requestVideoFrameCallback) return;
-  let t0 = 0, f0 = 0;
-  const cb = (now, md) => {
-    if (!stream || gen !== fpsGen) return;
-    if (!t0) { t0 = now; f0 = md.presentedFrames; }
-    else if (now - t0 >= 2000) {
-      fpsReal = (md.presentedFrames - f0) * 1000 / (now - t0);
-      t0 = now; f0 = md.presentedFrames; showCamInfo();
-    }
+  const gen = ++fpsGen; fpsReal = NaN; fpsHow = ""; fpsNote = ""; showCamInfo();
+  const over = () => !stream || gen !== fpsGen;
+  const report = (v, how) => { if (!over()) { fpsReal = v; fpsHow = how; showCamInfo(); } };
+  let got = 0;
+  if (window.MediaStreamTrackProcessor) {
+    // カメラから届くコマを直接数える（画面の描画に左右されない）
+    const tr = stream.getVideoTracks()[0].clone();
+    const reader = new MediaStreamTrackProcessor({ track: tr }).readable.getReader();
+    (async () => {
+      let t0 = -1, n = 0;
+      try {
+        while (!over()) {
+          const r = await reader.read(); if (r.done) break;
+          const ts = r.value.timestamp; r.value.close(); got++;   // ts はマイクロ秒
+          if (t0 < 0) { t0 = ts; n = 0; }
+          else if (++n && ts - t0 >= 2e6) { report(n * 1e6 / (ts - t0), "カメラ直"); t0 = ts; n = 0; }
+        }
+      } catch (e) { console.warn(e); fpsNote = "測れず（" + (e.message || e) + "）"; showCamInfo(); }
+      reader.cancel().catch(() => {}); tr.stop();
+    })();
+  } else if (liveVideo.requestVideoFrameCallback) {
+    // 予備：画面に出たコマを数える
+    let t0 = 0, n = 0, f0 = NaN;
+    const cb = (now, md) => {
+      if (over()) return;
+      got++;
+      if (!t0) { t0 = now; n = 0; f0 = md.presentedFrames; }
+      else {
+        n++;
+        if (now - t0 >= 2000) {
+          const frames = Number.isFinite(md.presentedFrames - f0) ? md.presentedFrames - f0 : n;
+          report(frames * 1000 / (now - t0), "画面"); t0 = now; n = 0; f0 = md.presentedFrames;
+        }
+      }
+      liveVideo.requestVideoFrameCallback(cb);
+    };
     liveVideo.requestVideoFrameCallback(cb);
-  };
-  liveVideo.requestVideoFrameCallback(cb);
+  } else { fpsNote = "測れず（このブラウザは非対応）"; showCamInfo(); return; }
+  setTimeout(() => {
+    if (!over() && isNaN(fpsReal) && !fpsNote) { fpsNote = `測れず（6秒でコマ ${got}）`; showCamInfo(); }
+  }, 6000);
 }
 
 async function startLive() {
@@ -644,8 +672,8 @@ async function startLive() {
     }
     fillCamSel(backs, stream.getVideoTracks()[0].getSettings().deviceId);
     liveVideo.srcObject = stream; await liveVideo.play();
-    measureLiveFps();
     $("liveStage").classList.remove("hidden"); $("liveCard").classList.remove("hidden");
+    measureLiveFps();
     $("liveStatus").textContent = "骨格モデルを読み込み中…";
     const lm = await getLandmarker("lite");
     $("liveStart").classList.add("hidden"); $("liveStop").classList.remove("hidden");
