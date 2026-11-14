@@ -32,6 +32,12 @@ h1{font-size:22px;margin:0}
 .tabs{display:flex;gap:8px;margin:12px 0 16px;position:sticky;top:0;background:var(--bg);padding:8px 0;z-index:5}
 .tabs button{flex:1;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:10px 6px;font-size:14px;font-weight:600}
 .tabs button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.viewsel{display:flex;align-items:center;gap:8px;margin:12px 0 0;font-size:14px}
+.viewsel span{color:var(--sub);white-space:nowrap}
+.viewsel button{flex:1;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:8px 6px;font:inherit;font-size:14px;font-weight:600}
+.viewsel button.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);font-weight:900}
+ul.notes{margin:4px 0 0;padding-left:20px;font-size:14px}
+ul.notes li{margin:4px 0}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:0 0 14px}
 .card h2{font-size:16px;margin:0 0 8px}
 label.row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0;font-size:14px}
@@ -115,6 +121,24 @@ details.card summary{font-weight:900;letter-spacing:.08em}
   <p class="sub">テコンドー分析用。動画は<b>この端末の中だけ</b>で調べます（外へ送りません）。骨格モデル（約5〜9MB）だけ初回に読み込みます。</p>
 </header>
 
+<div class="viewsel" role="radiogroup" aria-label="撮る向き">
+  <span>撮る向き</span>
+  <button type="button" data-view="side" class="on" aria-pressed="true">横から</button>
+  <button type="button" data-view="front" aria-pressed="false">正面から</button>
+</div>
+
+<div class="card front-only hidden" id="frontNote">
+  <h2>正面から撮るときの注意</h2>
+  <ul class="notes">
+    <li><b>カメラは蹴る方向の先、体の真ん中の前</b>に置く。ずれると左右の足で見え方が変わります</li>
+    <li><b>3m以上離す</b>。蹴った足がカメラに当たらないように。近いと足が大きく写りすぎて画面から出ます</li>
+    <li><b>カメラの高さは腰くらい（約1m）・まっすぐ水平</b>に。傾くと上体の横への傾きが測れません</li>
+    <li><b>足を替えるときも、体はカメラのほうを向いたまま</b>（横からのときのように向きを替えない）</li>
+    <li><b>かかと・つま先がはっきり見えるように</b>（ズボンの裾が足にかからない・床と違う色の足元）</li>
+  </ul>
+  <p class="small" style="margin:8px 0 0">正面で見たいところ：股関節の内側へのひねり・軸足のかかとの返し・膝の通り道・上体の横への傾き（横からでは見えにくいところ）。<br>⚠ <b>PC の分析はまだ横からの動画だけ</b>に対応しています。正面の動画は保存しておいてください。</p>
+</div>
+
 <nav class="tabs">
   <button data-tab="after" class="on">② 撮った動画を調べる</button>
   <button data-tab="live">① 撮る前の位置合わせ</button>
@@ -168,7 +192,7 @@ details.card summary{font-weight:900;letter-spacing:.08em}
 <section id="tab-live" class="hidden">
   <div class="card">
     <h2>カメラで立ち位置を合わせる</h2>
-    <p class="small" style="margin:0">スマホを<b>横向き</b>にして、撮るときと同じ場所に置きます。構えて立つと、全身が入っているか・大きさ・横向きか・明るさを判定します。<br>OK が出たら<b>カメラアプリに切り替えて撮影</b>（ふつうの動画・1080p・60fps）。</p>
+    <p class="small" style="margin:0">スマホを<b>横向き</b>にして、撮るときと同じ場所に置きます。構えて立つと、全身が入っているか・大きさ・<span class="side-only">横向きか</span><span class="front-only hidden">カメラのほうを向いているか・真ん中か・足元が見えるか</span>・明るさを判定します。<br>OK が出たら<b>カメラアプリに切り替えて撮影</b>（ふつうの動画・1080p・60fps）。</p>
     <button class="btn" id="liveStart">カメラを起動</button>
     <button class="btn secondary hidden" id="liveStop">止める</button>
     <button class="btn" id="shootBtn" style="margin-top:8px">カメラアプリで撮影 → そのまま調べる</button>
@@ -189,13 +213,22 @@ details.card summary{font-weight:900;letter-spacing:.08em}
 
 <details class="card">
   <summary>撮影の決まり</summary>
-  <ul>
+  <ul class="side-only">
     <li>横から1台（三脚かどこかに固定）・スマホは横向き</li>
     <li>左右8本ずつ。足を替えるときは体ごと向きを替える</li>
     <li>最初に1秒以上、構えて止まる</li>
     <li>1080p・60fps（ふつうの動画。スローは不要）・明るい場所</li>
     <li>蹴った足が画面の端から出ないよう、左右に余白（身長の半分くらい）</li>
     <li>試しは左右2〜3本の短い動画で</li>
+  </ul>
+  <ul class="front-only hidden">
+    <li>正面1台（蹴る方向の先・体の真ん中の前。三脚かどこかに固定）・スマホは横向き</li>
+    <li>3m以上離す・カメラの高さは腰くらい（約1m）・まっすぐ水平</li>
+    <li>左右8本ずつ。足を替えるときも体はカメラのほうを向いたまま</li>
+    <li>最初に1秒以上、構えて止まる</li>
+    <li>1080p・60fps（ふつうの動画）・明るい場所</li>
+    <li>頭の上にも余白（上段の蹴りは足が頭の高さまで来る）</li>
+    <li>横と正面の両方を撮るなら、2台同時がいちばん。1台なら横→正面の順に2回（本数は同じ）</li>
   </ul>
 </details>
 </main>
@@ -249,8 +282,28 @@ function framing(p, vw, vh) {
   for (let i = 0; i < 33; i++) { minX = Math.min(minX, X(i)); maxX = Math.max(maxX, X(i)); }
   const torso = Math.hypot(shMidX - hipMidX, shMidY - hipMidY);
   const sideRatio = Math.abs(X(11) - X(12)) / Math.max(1, torso);   // 横向きほど小さい
-  return { headTop, footBottom, bodyH, size: bodyH / vh, minX, maxX, centerX: hipMidX, hipMidY, sideRatio };
+  // 顔の向き：両耳の見え幅÷胴の長さ。横からの実動画で 0.09 前後（2026-11-14 測定）、正面を向くと 0.25〜0.35 の見込み。
+  // 構えは半身でも顔は相手（＝正面カメラ）を向くので、肩幅より顔で見るほうが正面撮影の判定に合う
+  const faceRatio = Math.abs(X(7) - X(8)) / Math.max(1, torso);
+  // 足元（かかと・つま先）の見えやすさ：4点の信頼度のうち一番低いもの
+  const footVis = Math.min(p[29][2], p[30][2], p[31][2], p[32][2]);
+  return { headTop, footBottom, bodyH, size: bodyH / vh, minX, maxX, centerX: hipMidX, hipMidY, sideRatio, faceRatio, footVis };
 }
+
+// 撮る向き（横から／正面から）。端末に覚えておく
+let view = "side";
+try { if (localStorage.getItem("tkdView") === "front") view = "front"; } catch (e) {}
+if (/[?&]view=front\b/.test(location.search)) view = "front";
+function setView(v) {
+  view = v;
+  try { localStorage.setItem("tkdView", v); } catch (e) {}
+  document.querySelectorAll(".viewsel button").forEach(b => { const on = b.dataset.view === v; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); });
+  document.querySelectorAll(".side-only").forEach(el => el.classList.toggle("hidden", v !== "side"));
+  document.querySelectorAll(".front-only").forEach(el => el.classList.toggle("hidden", v !== "front"));
+  document.getElementById("result")?.classList.add("hidden");   // 前の向きで出した結果は消す
+}
+document.querySelectorAll(".viewsel button").forEach(b => b.onclick = () => setView(b.dataset.view));
+setView(view);
 
 // 画面の明るさ（0〜255）
 const lumaCanvas = document.createElement("canvas"); lumaCanvas.width = 32; lumaCanvas.height = 18;
@@ -285,18 +338,39 @@ function judgeFraming(f, vw, vh, lum) {
   else if (!headOk) add("ng", "頭が切れている", "カメラを少し上へ向けるか、下がって");
   else add("ng", "足が切れている", "カメラを少し下へ向けるか、下がって");
   const sz = f.size;
-  if (sz < 0.38) add("warn", `小さい（画面の高さの ${Math.round(sz*100)}%）`, "もう少し近づいて（目安 45〜80%）");
-  else if (sz > 0.8) add("ng", `大きすぎ（画面の高さの ${Math.round(sz*100)}%）`, "下がって。蹴り足が画面から出ます（目安 45〜80%）");
-  else add("ok", `大きさ OK（画面の高さの ${Math.round(sz*100)}%）`, "目安 45〜80%");
+  const front = view === "front";
+  // 正面から：蹴り足がカメラに近づいて大きく写るので、上限を低めにする
+  const szMax = front ? 0.72 : 0.8, range = front ? "45〜70%" : "45〜80%";
+  if (sz < 0.38) add("warn", `小さい（画面の高さの ${Math.round(sz*100)}%）`, `もう少し近づいて（目安 ${range}）`);
+  else if (sz > szMax) add("ng", `${front ? "近すぎ" : "大きすぎ"}（画面の高さの ${Math.round(sz*100)}%）`,
+    front ? "下がって（3m以上）。蹴った足がカメラに近づいて大きく写り、画面から出ます。足がカメラに当たらないようにも" : `下がって。蹴り足が画面から出ます（目安 ${range}）`);
+  else add("ok", `大きさ OK（画面の高さの ${Math.round(sz*100)}%）`, `目安 ${range}`);
   const need = 0.55*f.bodyH;                     // 蹴り足が届く距離 ≒ 身長の半分
   const left = f.centerX, right = vw - f.centerX;
-  if (left >= need && right >= need) add("ok", "左右の余白 OK", "向きを替えて蹴っても足が画面に収まる");
+  if (left >= need && right >= need) add("ok", "左右の余白 OK", front ? "蹴り足が横に振れても画面に収まる" : "向きを替えて蹴っても足が画面に収まる");
   else if (left < need && right < need) add("ng", "左右の余白が足りない", "下がって（蹴り足が画面の端から出ます）");
   else add("warn", `画面の${left < need ? "左" : "右"}に寄りすぎ`, "体が画面の真ん中に来るように");
-  const r = f.sideRatio;
-  if (r < 0.5) add("ok", "横向き OK", `肩の見え幅 ${r.toFixed(2)}（構えの斜めは OK）`);
-  else if (r < 0.75) add("warn", `少し正面寄り（肩の見え幅 ${r.toFixed(2)}）`, "カメラに対して横向きに構える");
-  else add("ng", "正面を向いている", "カメラに対して真横を向いて構える");
+  if (!front) {
+    const r = f.sideRatio;
+    if (r < 0.5) add("ok", "横向き OK", `肩の見え幅 ${r.toFixed(2)}（構えの斜めは OK）`);
+    else if (r < 0.75) add("warn", `少し正面寄り（肩の見え幅 ${r.toFixed(2)}）`, "カメラに対して横向きに構える");
+    else add("ng", "正面を向いている", "カメラに対して真横を向いて構える（正面から撮るなら、上の「撮る向き」を「正面から」に）");
+  } else {
+    const r = f.faceRatio;
+    if (r >= 0.2) add("ok", "カメラのほうを向いている", `顔の向き ${r.toFixed(2)}（構えの半身は OK）`);
+    else if (r >= 0.13) add("warn", `少し斜め（顔の向き ${r.toFixed(2)}）`, "顔と体をカメラのほうへ。カメラは蹴る方向の先に置きます");
+    else add("ng", `横を向いている（顔の向き ${r.toFixed(2)}）`, "カメラのほうを向いて構える（横から撮るなら、上の「撮る向き」を「横から」に）");
+    // 体が真ん中にあるか（ずれると左右の足で見え方が変わる）
+    const cx = f.centerX / vw;
+    if (cx < 0.4 || cx > 0.6) add("warn", `体が画面の${cx < 0.5 ? "左" : "右"}に寄っている`, "カメラを体の真ん中の前に。ずれると左右の足で見え方が変わります");
+    // 上段の蹴りは足が頭の高さまで来る＋カメラに近づいて高く写る
+    if (f.headTop > 0.015*vh && f.headTop < 0.06*vh) add("warn", "頭の上の余白が少ない", "上段の蹴りは足が頭の高さまで来ます。少し下がるか、カメラを少し上へ");
+    // 軸足のかかとの返しを見るため、足元が見えているか
+    if (Number.isFinite(f.footVis)) {
+      if (f.footVis >= 0.5) add("ok", "足元（かかと・つま先）が見えている", "軸足のかかとの返しが見られる");
+      else add("warn", "足元が見えにくい", "ズボンの裾が足にかからないように・床と違う色の足元に。カメラが高すぎないかも確認");
+    }
+  }
   if (Number.isFinite(lum)) {
     if (lum < 60) add("ng", "暗い", "明るい場所へ（暗いと足先がブレます）");
     else if (lum < 95) add("warn", "やや暗い", "できれば明るい場所・照明の下で");
@@ -514,6 +588,7 @@ async function buildReport(frames, fps) {
   const mf = {
     headTop: med(base.map(o => o.x.headTop)), footBottom: med(base.map(o => o.x.footBottom)), bodyH: Href,
     size: Href / vh, centerX: med(base.map(o => o.x.centerX)), sideRatio: med(base.map(o => o.x.sideRatio)),
+    faceRatio: med(base.map(o => o.x.faceRatio)), footVis: med(base.map(o => o.x.footVis)),
   };
   const lum = med(frames.map(f => f.lum));
   items.push(...judgeFraming(mf, vw, vh, lum).filter(i => !(i.title.startsWith("左右の余白") || i.title.startsWith("画面の"))));
@@ -553,6 +628,22 @@ async function buildReport(frames, fps) {
   else if (kicks.length === exp) add("ok", `蹴り ${kicks.length} 本`, "予定どおり");
   else add("warn", `蹴り ${kicks.length} 本（予定 ${exp} 本）`, "1本が2本に割れた／取りこぼした可能性。下の一覧で確認");
 
+  // 正面から：蹴る直前の構え（動き出し0.5秒前まで）でカメラのほうを向いていたか。
+  // 横からのくせで足を替えるときに体ごと向きを替えると、その蹴りは正面から見えない
+  if (view === "front" && kicks.length && mf.faceRatio >= 0.13) {   // 全体が横向きなら上の×で足りる
+    const turned = kicks.filter(s => {
+      const t0 = frames[s.a].t, win = 0.5*S;
+      const r = [];
+      for (let i = 0; i < frames.length; i++) {
+        const f = frames[i];
+        if (f.p && f.t >= t0 - win && f.t < t0 && !(kd[i] > 0.06)) r.push(framing(f.p, vw, vh).faceRatio);
+      }
+      return r.length >= 3 && med(r) < 0.13;
+    }).length;
+    if (turned) add("warn", `蹴る前に横を向いていた蹴りが ${turned} 本`, "足を替えるときも体はカメラのほうを向いたまま（正面撮影では向きを替えない）");
+    else add("ok", "どの蹴りもカメラのほうを向いて構えている", "足を替えても向きが変わっていない");
+  }
+
   if (kickInfo.length) {
     const nT = kickInfo.filter(k => k.tracked).length, ratio = nT / kickInfo.length;
     const sparse = kickInfo.filter(k => k.top < 3).length;
@@ -570,7 +661,9 @@ async function showReport(items, kickInfo, m) {
   const v = worst(items.filter(i => i.level !== "na"));
   const el = $("verdict");
   el.className = `verdict v-${v}`;
-  el.innerHTML = v === "ok" ? "この撮り方で OK<small>PC で分析に回せます（最初の1本は PC でも確認）</small>"
+  el.innerHTML = v === "ok" ? (view === "front"
+      ? "この撮り方で OK<small>正面の動画です。PC の分析はまだ横からだけなので、動画は保存しておいてください</small>"
+      : "この撮り方で OK<small>PC で分析に回せます（最初の1本は PC でも確認）</small>")
     : v === "warn" ? "使えますが、注意点があります<small>△ の項目を見て、次の撮影で直せるものは直してください</small>"
     : "撮り直しをおすすめします<small>× の項目を直してから撮り直してください</small>";
   renderChecks($("checkList"), items);
@@ -604,7 +697,7 @@ async function showReport(items, kickInfo, m) {
   ].map(([a, b]) => `<tr><td>${a}</td><td>${String(b).replace(/[<>&]/g, "")}</td></tr>`).join("");
   $("result").classList.remove("hidden");
   $("result").scrollIntoView({ behavior: "smooth", block: "start" });
-  window.__checkResult = { items, kickInfo: kickInfo.map(({ pick, ...k }) => k), fps: m.fps, S: m.S };
+  window.__checkResult = { view, items, kickInfo: kickInfo.map(({ pick, ...k }) => k), fps: m.fps, S: m.S };
 }
 
 
