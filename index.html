@@ -35,9 +35,15 @@ h1{font-size:22px;margin:0}
 .viewsel{display:flex;align-items:center;gap:8px;margin:12px 0 0;font-size:14px}
 .viewsel span{color:var(--sub);white-space:nowrap}
 .viewsel button{flex:1;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:8px 6px;font:inherit;font-size:14px;font-weight:600}
+.kicksel{display:flex;align-items:center;gap:8px;margin:8px 0 0;font-size:14px}
+.kicksel span{color:var(--sub);white-space:nowrap}
+.kicksel button{flex:1;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:8px 6px;font:inherit;font-size:14px;font-weight:600}
+.kicksel button.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);font-weight:900}
 .viewsel button.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);font-weight:900}
 ul.notes{margin:4px 0 0;padding-left:20px;font-size:14px}
 ul.notes li{margin:4px 0}
+.howh{font-size:15px;margin:14px 0 2px}
+.look{margin:6px 0 0}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:0 0 14px}
 .card h2{font-size:16px;margin:0 0 8px}
 label.row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0;font-size:14px}
@@ -74,10 +80,21 @@ ul.checks li:first-child{border-top:0}
 .kick div{padding:6px 8px}
 .kick .ttl{font-weight:700;font-size:13px}
 .live-status{position:absolute;left:8px;right:8px;top:8px;border-radius:10px;padding:8px 10px;font-weight:700;font-size:15px;text-align:center}
+#liveStage{border:10px solid #888;box-sizing:border-box}
+#liveStage.f-ok{border-color:#1a9e4b}#liveStage.f-warn{border-color:#e0a000}#liveStage.f-ng{border-color:#d93025}
+.live-big{position:absolute;left:0;right:0;bottom:6%;text-align:center;font-weight:900;font-size:clamp(28px,8vw,72px);color:#fff;text-shadow:0 0 6px #000,0 0 12px #000;pointer-events:none;line-height:1.15}
+.live-tools{position:absolute;right:8px;bottom:8px;display:flex;gap:6px}
+.live-tools button{border:0;border-radius:8px;padding:6px 10px;font:inherit;font-size:13px;font-weight:700;background:rgba(0,0,0,.6);color:#fff}
+#liveStage:fullscreen{width:100vw;height:100vh;border-radius:0;display:flex;align-items:center;justify-content:center}
+#liveStage:fullscreen video{width:100%;height:100%;object-fit:contain}
+#liveStage:fullscreen canvas.ov{object-fit:contain}
+#liveStage:fullscreen .live-big{font-size:clamp(40px,10vh,110px)}
 details{margin:0 0 14px}
 details summary{font-weight:700;cursor:pointer}
 details ul{padding-left:20px;font-size:14px;margin:8px 0 0}
 .hidden{display:none !important}
+.khide{display:none !important}
+.whide{display:none !important}
 table.meta{width:100%;font-size:13px;border-collapse:collapse}
 table.meta td{padding:4px 0;border-top:1px solid var(--line)}
 table.meta td:last-child{text-align:right;font-variant-numeric:tabular-nums}
@@ -121,22 +138,74 @@ details.card summary{font-weight:900;letter-spacing:.08em}
   <p class="sub">テコンドー分析用。動画は<b>この端末の中だけ</b>で調べます（外へ送りません）。骨格モデル（約5〜9MB）だけ初回に読み込みます。</p>
 </header>
 
-<div class="viewsel" role="radiogroup" aria-label="撮る向き">
-  <span>撮る向き</span>
-  <button type="button" data-view="side" class="on" aria-pressed="true">横から</button>
-  <button type="button" data-view="front" aria-pressed="false">正面から</button>
+<div class="kicksel whosel" role="radiogroup" aria-label="撮る人">
+  <span>撮る人</span>
+  <button type="button" data-who="solo" class="on" aria-pressed="true">一人で</button>
+  <button type="button" data-who="helper" aria-pressed="false">人に撮ってもらう</button>
+</div>
+<div class="kicksel" role="radiogroup" aria-label="蹴りの種類">
+  <span>蹴り</span>
+  <button type="button" data-kick="round" class="on" aria-pressed="true">回し蹴り</button>
+  <button type="button" data-kick="yop" aria-pressed="false">横蹴り</button>
+  <button type="button" data-kick="spin" aria-pressed="false">トラヨプチャ</button>
 </div>
 
-<div class="card front-only hidden" id="frontNote">
-  <h2>正面から撮るときの注意</h2>
+<div class="card" id="howto">
+  <h2><span data-kicks="round">回し蹴り</span><span data-kicks="yop">横蹴り</span><span data-kicks="spin">トラヨプチャ</span>の撮り方</h2>
+  <h3 class="howh">正面カメラ</h3>
   <ul class="notes">
-    <li><b>カメラは蹴る方向の先、体の真ん中の前</b>に置く。ずれると左右の足で見え方が変わります</li>
-    <li><b>3m以上離す</b>。蹴った足がカメラに当たらないように。近いと足が大きく写りすぎて画面から出ます</li>
-    <li><b>カメラの高さは腰くらい（約1m）・まっすぐ水平</b>に。傾くと上体の横への傾きが測れません</li>
-    <li><b>足を替えるときも、体はカメラのほうを向いたまま</b>（横からのときのように向きを替えない）</li>
-    <li><b>かかと・つま先がはっきり見えるように</b>（ズボンの裾が足にかからない・床と違う色の足元）</li>
+    <li><b>蹴る方向の先（的の後ろ）・体の真ん中の前</b>に置く。三脚かどこかに固定・スマホは横向き</li>
+    <li><b>3m以上離す</b>（足が当たらない・大きく写りすぎない）。離れすぎも×：立って<b>画面の高さの半分〜6割</b>が目安</li>
+    <li>カメラの高さは腰くらい（約1m）・まっすぐ水平</li>
+    <li>かかと・つま先がはっきり見えるように（裾が足にかからない・床と違う色の足元）</li>
+    <li data-kicks="round">足を替えるときも、体はカメラのほうを向いたまま</li>
+    <li data-kicks="yop spin">足を替えても的の位置は同じ。<b>正面のカメラは動かさない</b></li>
+    <li data-kicks="spin">回ったあと体が横へずれやすいので、<b>ほかの蹴りより少し離して広めに</b></li>
   </ul>
-  <p class="small" style="margin:8px 0 0">正面で見たいところ：股関節の内側へのひねり・軸足のかかとの返し・膝の通り道・上体の横への傾き（横からでは見えにくいところ）。<br>⚠ <b>PC の分析はまだ横からの動画だけ</b>に対応しています。正面の動画は保存しておいてください。</p>
+  <p class="small look">見るところ：<span data-kicks="round">股関節の内側へのひねり・軸足のかかとの返し・膝の通り道・上体の横への傾き</span><span data-kicks="yop">足がまっすぐ的へ出るか（横へ振れないか）・足刀の向き・軸足のかかとの返し</span><span data-kicks="spin">頭が先に回って的を見ているか・的から目を離している時間・回ったあと横へ振れず一直線に出るか</span></p>
+
+  <h3 class="howh">横カメラ</h3>
+  <ul class="notes">
+    <li>蹴る方向に対して真横。三脚かどこかに固定・スマホは横向き・高さは腰くらい</li>
+    <li data-kicks="round"><b>次に蹴る足がカメラ側</b>に来る向きで構える（遠い側の足は体に隠れる）。足を替えるときは体ごと向きを替える</li>
+    <li data-kicks="yop spin"><b>当たる瞬間に胸・おなかが見える側</b>に置く（背中側だと膝のたたみが体の陰に隠れる）</li>
+    <li data-kicks="yop spin">胸の向きは蹴る足で逆になる。<b>足を替えるときは、的はそのままで横のカメラを反対側へ移す</b></li>
+    <li data-kicks="spin">位置は<b>同じ足の横蹴りと同じ</b>でよい（当たる瞬間の形が同じ）。横蹴り→トラヨプチャを続けて撮れる</li>
+    <li>蹴った足が画面の端から出ないよう、左右に余白（身長の半分くらい）</li>
+  </ul>
+  <p class="small look">見るところ：<span data-kicks="round">膝の引き上げ・足の高さ・蹴りの速さ・上体の倒れ・軸足</span><span data-kicks="yop">たたみ→伸ばしが一直線か・足の高さ・上体が後ろへ倒れすぎないか・軸足のぶれ</span><span data-kicks="spin">足の高さ・伸び・回る速さ・着地のふらつき</span></p>
+
+  <h3 class="howh">共通</h3>
+  <ul class="notes">
+    <li>最初に1秒以上、構えて止まる</li>
+    <li>1080p・60fps（ふつうの動画。スローは不要）・明るい場所</li>
+    <li>左右8本ずつ。試しは左右2〜3本の短い動画で</li>
+    <li>2台同時がいちばん。1台なら横→正面の順に2回（本数は同じ）</li>
+  </ul>
+  <h3 class="howh" data-who="solo">一人で撮るとき</h3>
+  <ol class="notes" data-who="solo">
+    <li>下の「① 撮る前の位置合わせ」で OK が出るまで立ち位置を合わせる（色・大きな字・声で知らせます）</li>
+    <li>OK の位置の<b>足元にテープで印</b>をつける</li>
+    <li>スマホへ行き「カメラアプリで撮影」で録画開始</li>
+    <li>印に立って<b>1秒構えて止まる</b> → 左右の本数を続けて蹴る</li>
+    <li>戻って停止 → 自動でこの画面に戻ってチェック。歩いて出入りする場面は除いて調べます</li>
+  </ol>
+  <h3 class="howh" data-who="helper">撮ってくれる人へ</h3>
+  <ul class="notes" data-who="helper">
+    <li>スマホは<b>横向き</b>。できれば三脚。手で持つなら、ひじを体や台につけて<b>動かさない</b></li>
+    <li><b>ズームしない・人を追いかけない</b>（カメラが動くと分析できません）。画面に全身が入る位置で止めておく</li>
+    <li>置く場所は上の「正面カメラ」「横カメラ」のとおり。位置合わせは下の「①」を見ながら合わせてもらう</li>
+    <li><b>構える前に録画開始</b>、最後の蹴りのあと<b>2秒くらいで停止</b></li>
+    <li data-kicks="yop spin">足を替えるときは、横のカメラを反対側へ（胸・おなかが見える側）</li>
+    <li data-kicks="round">足を替えるときは、蹴る人が向きを替える（カメラはそのまま）</li>
+  </ul>
+  <p class="small" style="margin:8px 0 0">⚠ PC の分析は、いまは<b>回し蹴りの横からの動画だけ</b>に対応。それ以外の動画は保存しておいてください。</p>
+</div>
+
+<div class="viewsel" role="radiogroup" aria-label="撮る向き">
+  <span>いま撮る向き</span>
+  <button type="button" data-view="side" class="on" aria-pressed="true">横から</button>
+  <button type="button" data-view="front" aria-pressed="false">正面から</button>
 </div>
 
 <nav class="tabs">
@@ -205,32 +274,14 @@ details.card summary{font-weight:900;letter-spacing:.08em}
     <video id="liveVideo" playsinline muted autoplay></video>
     <canvas class="ov" id="liveOv"></canvas>
     <div class="live-status v-warn" id="liveStatus">判定中…</div>
+    <div class="live-big" id="liveBig"></div>
+    <div class="live-tools"><button type="button" id="voiceBtn">声：オン</button><button type="button" id="fsBtn">全画面</button></div>
   </div>
   <div style="height:14px"></div>
   <div class="card hidden" id="liveCard"><h2>いまの判定</h2><ul class="checks" id="liveList"></ul>
     <p class="small">※ カメラアプリは、機種によって<b>画角が少し狭く</b>なることがあります。ここで OK でも上下左右に少し余裕を。</p></div>
 </section>
 
-<details class="card">
-  <summary>撮影の決まり</summary>
-  <ul class="side-only">
-    <li>横から1台（三脚かどこかに固定）・スマホは横向き。<b>正面とあわせて2方向</b>で撮る（正面は上の「撮る向き」を切り替え）</li>
-    <li>左右8本ずつ。足を替えるときは体ごと向きを替え、<b>次に蹴る足がカメラ側</b>に来るようにする（遠い側の足は体に隠れる）</li>
-    <li>最初に1秒以上、構えて止まる</li>
-    <li>1080p・60fps（ふつうの動画。スローは不要）・明るい場所</li>
-    <li>蹴った足が画面の端から出ないよう、左右に余白（身長の半分くらい）</li>
-    <li>試しは左右2〜3本の短い動画で</li>
-  </ul>
-  <ul class="front-only hidden">
-    <li>正面1台（蹴る方向の先・体の真ん中の前。三脚かどこかに固定）・スマホは横向き</li>
-    <li>3m以上離す・カメラの高さは腰くらい（約1m）・まっすぐ水平</li>
-    <li>左右8本ずつ。足を替えるときも体はカメラのほうを向いたまま</li>
-    <li>最初に1秒以上、構えて止まる</li>
-    <li>1080p・60fps（ふつうの動画）・明るい場所</li>
-    <li>頭の上にも余白（上段の蹴りは足が頭の高さまで来る）</li>
-    <li>横と正面の両方を撮るなら、2台同時がいちばん。1台なら横→正面の順に2回（本数は同じ）</li>
-  </ul>
-</details>
 </main>
 
 <script type="module">
@@ -305,6 +356,30 @@ function setView(v) {
 document.querySelectorAll(".viewsel button").forEach(b => b.onclick = () => setView(b.dataset.view));
 setView(view);
 
+// 蹴りの種類（回し蹴り／横蹴り／トラヨプチャ）。カメラ位置の決まりが変わる。端末に覚えておく
+let kick = "round";
+try { const k = localStorage.getItem("tkdKick"); if (k === "yop" || k === "spin") kick = k; } catch (e) {}
+function setKick(k) {
+  kick = k;
+  try { localStorage.setItem("tkdKick", k); } catch (e) {}
+  document.querySelectorAll(".kicksel button[data-kick]").forEach(b => { const on = b.dataset.kick === k; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); });
+  document.querySelectorAll("[data-kicks]").forEach(el => el.classList.toggle("khide", !el.dataset.kicks.split(" ").includes(k)));
+}
+document.querySelectorAll(".kicksel button[data-kick]").forEach(b => b.onclick = () => setKick(b.dataset.kick));
+setKick(kick);
+
+// 撮る人（一人で／人に撮ってもらう）。手順と OK のときの知らせ方が変わる。端末に覚えておく
+let who = "solo";
+try { if (localStorage.getItem("tkdWho") === "helper") who = "helper"; } catch (e) {}
+function setWho(w) {
+  who = w;
+  try { localStorage.setItem("tkdWho", w); } catch (e) {}
+  document.querySelectorAll(".whosel button").forEach(b => { const on = b.dataset.who === w; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); });
+  document.querySelectorAll("[data-who]:not(button)").forEach(el => el.classList.toggle("whide", el.dataset.who !== w));
+}
+document.querySelectorAll(".whosel button").forEach(b => b.onclick = () => setWho(b.dataset.who));
+setWho(who);
+
 // 画面の明るさ（0〜255）
 const lumaCanvas = document.createElement("canvas"); lumaCanvas.width = 32; lumaCanvas.height = 18;
 const lumaCtx = lumaCanvas.getContext("2d", { willReadFrequently: true });
@@ -345,7 +420,8 @@ function judgeFraming(f, vw, vh, lum) {
   else if (sz > szMax) add("ng", `${front ? "近すぎ" : "大きすぎ"}（画面の高さの ${Math.round(sz*100)}%）`,
     front ? "下がって（3m以上）。蹴った足がカメラに近づいて大きく写り、画面から出ます。足がカメラに当たらないようにも" : `下がって。蹴り足が画面から出ます（目安 ${range}）`);
   else add("ok", `大きさ OK（画面の高さの ${Math.round(sz*100)}%）`, `目安 ${range}`);
-  const need = 0.55*f.bodyH;                     // 蹴り足が届く距離 ≒ 身長の半分
+  // 蹴り足が届く距離 ≒ 身長の半分。トラヨプチャを正面から撮るときは、回ったあと横へずれるぶん多めに（仮の値）
+  const need = (front && kick === "spin" ? 0.7 : 0.55)*f.bodyH;
   const left = f.centerX, right = vw - f.centerX;
   if (left >= need && right >= need) add("ok", "左右の余白 OK", front ? "蹴り足が横に振れても画面に収まる" : "向きを替えて蹴っても足が画面に収まる");
   else if (left < need && right < need) add("ng", "左右の余白が足りない", "下がって（蹴り足が画面の端から出ます）");
@@ -564,6 +640,20 @@ async function buildReport(frames, fps) {
   if (fps <= 65 && rawDur > 1.3) S = Math.max(2, Math.round(rawDur / 0.55));
   const res = findKicks(frames, Href, vh, 0.2*S, 0.12*S);
   kicks = res.kicks; const kd = res.kd;
+  // 2026-11-15 一人撮影：最初と最後に歩いて出入りする場面が入る。
+  // 蹴りは床の印の上で続けて行うので、腰の位置が蹴りの多くから離れている「蹴り」は歩きとして除く
+  const hipX = i => { const p = frames[i].p; return p ? (p[23][0] + p[24][0]) / 2 * vw : NaN; };
+  if (kicks.length >= 3) {
+    const hx = kicks.map(s => hipX(Math.round((s.a + s.b) / 2)));
+    const mid = med(hx.filter(Number.isFinite));
+    const keep = kicks.filter((s, n) => !(Number.isFinite(hx[n]) && Math.abs(hx[n] - mid) > 0.8*Href));
+    if (keep.length) kicks = keep;
+  }
+  // 調べる範囲＝最初の蹴りの1.5秒前〜最後の蹴りの1秒後（その外は歩いて出入りする場面）
+  const winA = kicks.length ? frames[kicks[0].a].t - 1.5*S : -Infinity;
+  const winB = kicks.length ? frames[kicks[kicks.length-1].b].t + 1.0*S : Infinity;
+  const inWin = f => f.t >= winA && f.t <= winB;
+  const walkIn = kicks.length ? Math.max(0, winA - withP[0].t) : 0, walkOut = kicks.length ? Math.max(0, withP[withP.length-1].t - winB) : 0;
   const realFps = Number.isFinite(fps) ? fps*S : NaN;
   const mode = $("shotMode").value;
 
@@ -583,7 +673,7 @@ async function buildReport(frames, fps) {
   else add("ng", `解像度 ${vw}×${vh}`, "低すぎます。1080p で");
 
   // 位置合わせ（構えているコマの中央値）＋ 切れているコマの割合
-  const stance = withP.map((f, i) => ({ f, x: fr[i], k: kd[frames.indexOf(f)] })).filter(o => !(o.k > 0.06));
+  const stance = withP.map((f, i) => ({ f, x: fr[i], k: kd[frames.indexOf(f)] })).filter(o => inWin(o.f) && !(o.k > 0.06));
   const base = stance.length ? stance : withP.map((f, i) => ({ f, x: fr[i] }));
   const mf = {
     headTop: med(base.map(o => o.x.headTop)), footBottom: med(base.map(o => o.x.footBottom)), bodyH: Href,
@@ -593,16 +683,33 @@ async function buildReport(frames, fps) {
   const lum = med(frames.map(f => f.lum));
   items.push(...judgeFraming(mf, vw, vh, lum).filter(i => !(i.title.startsWith("左右の余白") || i.title.startsWith("画面の"))));
   // 蹴り中に体（足先）が画面の端から出たか
-  const outFrames = withP.filter((f, i) => fr[i].minX < 0.005*vw || fr[i].maxX > 0.995*vw || fr[i].headTop < 0 || fr[i].footBottom > vh).length;
-  if (outFrames / withP.length > 0.03) add("warn", "画面からはみ出すコマがある", `全体の ${Math.round(outFrames/withP.length*100)}%。下がるか、体を画面の真ん中に`);
+  const winN = withP.filter(inWin).length || withP.length;
+  const outFrames = withP.filter((f, i) => inWin(f) && (fr[i].minX < 0.005*vw || fr[i].maxX > 0.995*vw || fr[i].headTop < 0 || fr[i].footBottom > vh)).length;
+  if (walkIn + walkOut > 1.0*S) add("ok", "歩いて出入りする場面は除いて調べました", `最初 ${(walkIn/S).toFixed(1)} 秒・最後 ${(walkOut/S).toFixed(1)} 秒`);
+  if (outFrames / winN > 0.03) add("warn", "画面からはみ出すコマがある", `全体の ${Math.round(outFrames/winN*100)}%。下がるか、体を画面の真ん中に`);
   else add("ok", "画面からはみ出さない", "蹴っても体が画面に収まっている");
   if (detRate < 0.9) add("warn", `骨格が取れないコマが ${Math.round((1-detRate)*100)}%`, "明るさ・人の重なり・服の色（背景と同じ色）を確認");
 
   // 最初の構え
   const firstP = withP[0].t;
   const firstKick = kicks.length ? frames[kicks[0].a].t : dur;
-  const stanceSec = (firstKick - Math.max(0, firstP)) / S;
-  if (firstP > 0.5*S) add("warn", "最初は人が映っていない", "構えた状態から撮り始めると、分析が安定します");
+  // 構えて止まっている時間：最初の蹴りの直前から、腰がほぼ動いていない間をさかのぼる（歩いて入る場面は含めない）
+  let stanceStart = firstKick;
+  if (kicks.length) {
+    // 正面では歩いても腰の左右はあまり動かず、大きさが変わる → 鼻〜足首の高さも見る
+    const tall = i => { const p = frames[i].p; return p ? (Math.max(p[27][1], p[28][1]) - p[0][1]) * vh : NaN; };
+    const i0 = kicks[0].a, x0 = hipX(i0), t0 = tall(i0); let miss = 0;
+    for (let i = i0 - 1; i >= 0; i--) {
+      const x = hipX(i);
+      if (!Number.isFinite(x)) { if (++miss > 6) break; continue; }
+      miss = 0;
+      if (Number.isFinite(x0) && Math.abs(x - x0) > 0.12*Href) break;
+      const tt = tall(i);
+      if (Number.isFinite(t0) && Number.isFinite(tt) && Math.abs(tt - t0) > 0.12*t0) break;
+      stanceStart = frames[i].t;
+    }
+  } else stanceStart = Math.max(0, firstP);
+  const stanceSec = (firstKick - stanceStart) / S;
   if (stanceSec >= 1) add("ok", `最初の構え ${stanceSec.toFixed(1)} 秒`, "1秒以上あり OK");
   else add("warn", `最初の構え ${stanceSec.toFixed(1)} 秒`, "最初に1秒以上、構えて止まってください");
 
@@ -706,6 +813,63 @@ async function showReport(items, kickInfo, m) {
 // ---------------------------------------------------------------------------
 const liveVideo = $("liveVideo"), liveOv = $("liveOv"), liveCtx = liveOv.getContext("2d");
 let stream = null, liveRaf = 0, okSince = 0, buzzed = false;
+
+// ---- 離れて立ったまま分かる知らせ：枠の色（A）・声（B）・OKの音（C） ----
+// 判定の文を、3m先でも分かる短いことばにする（声と大きな字で使う）
+function shortSay(i) {
+  const t = i.title;
+  if (t.startsWith("人が見つからない")) return "全身を映して";
+  if (t.startsWith("スマホの向き")) return "スマホを横向きに";
+  if (t.startsWith("頭と足が切れて") || t.startsWith("左右の余白が足りない") || t.startsWith("大きすぎ") || t.startsWith("近すぎ")) return "下がって";
+  if (t.startsWith("頭が切れて")) return "カメラを上へ";
+  if (t.startsWith("足が切れて")) return "カメラを下へ";
+  if (t.startsWith("小さい")) return "近づいて";
+  if (t.startsWith("頭の上の余白")) return "少し下がって";
+  const m = t.match(/画面の(左|右)に寄/);   // 背面カメラなので、画面の左＝カメラから見て左
+  if (m) return `カメラから見て${m[1] === "左" ? "右" : "左"}へ`;
+  if (t.startsWith("正面を向いている")) return "横を向いて";
+  if (t.startsWith("少し正面寄り")) return "もう少し横向きに";
+  if (t.startsWith("横を向いている")) return "カメラを向いて";
+  if (t.startsWith("少し斜め")) return "もう少しカメラのほうへ";
+  if (t.startsWith("足元が見えにくい")) return "足元を見せて";
+  if (t.startsWith("暗い") || t.startsWith("やや暗い")) return "暗いです";
+  if (t.startsWith("明るすぎ")) return "明るすぎます";
+  return t.replace(/（.*$/, "");
+}
+let voiceOn = true;
+try { voiceOn = localStorage.getItem("tkdVoice") !== "off"; } catch (e) {}
+function showVoiceBtn() { const b = $("voiceBtn"); if (b) b.textContent = voiceOn ? "声：オン" : "声：オフ"; }
+let jaVoice = null;
+function pickVoice() { const vs = window.speechSynthesis?.getVoices() || []; jaVoice = vs.find(v => /^ja/i.test(v.lang)) || null; }
+if (window.speechSynthesis) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+function say(text) {
+  if (!voiceOn || !window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text); u.lang = "ja-JP"; u.rate = 1.05;
+  if (jaVoice) u.voice = jaVoice;
+  speechSynthesis.speak(u);
+}
+let audioCtx = null;
+function pip() {   // OK の合図（ピッピッ）
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const t0 = audioCtx.currentTime;
+    for (const d of [0, 0.18]) {
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.frequency.value = 1320; g.gain.setValueAtTime(0.0001, t0 + d);
+      g.gain.exponentialRampToValueAtTime(0.4, t0 + d + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d + 0.12);
+      o.connect(g).connect(audioCtx.destination); o.start(t0 + d); o.stop(t0 + d + 0.13);
+    }
+  } catch (e) {}
+}
+// 同じ指示は、1秒続いたら言う。直らなければ5秒おきにくり返す
+let sayText = "", saySince = 0, saidAt = 0, saidText = "";
+function speakGuide(text, now) {
+  if (text !== sayText) { sayText = text; saySince = now; return; }
+  if (now - saySince < 1000) return;
+  if (text !== saidText || now - saidAt > 5000) { say(text); saidText = text; saidAt = now; }
+}
+function resetGuide() { sayText = ""; saySince = 0; saidAt = 0; saidText = ""; window.speechSynthesis?.cancel(); }
 document.addEventListener("change", async e => {
   if (e.target.id !== "camSel" || !stream) return;
   try { localStorage.setItem("tkdCam", e.target.value); } catch (_) {}
@@ -797,6 +961,9 @@ function measureLiveFps() {
 
 async function startLive() {
   $("liveStart").disabled = true; $("liveStart").textContent = "起動中…";
+  // スマホは、ボタンを押した瞬間でないと音と声が出せない → ここで準備しておく
+  try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); audioCtx.resume(); } catch (e) {}
+  if (voiceOn && window.speechSynthesis) { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; speechSynthesis.speak(u); }
   try {
     stream = await openCam(camPref());
     // 「背面」だけだと超広角が選ばれる機種がある → 通常レンズ（Android は camera2 0）に切り替える
@@ -840,10 +1007,15 @@ async function startLive() {
         const now = performance.now();
         if (w === "ok") { if (!okSince) okSince = now; } else { okSince = 0; buzzed = false; }
         const stable = okSince && now - okSince > 1500;
-        st.className = `live-status v-${stable ? "ok" : w === "ng" ? "ng" : "warn"}`;
-        st.textContent = stable ? "OK！ この位置でカメラアプリに切り替えて撮影"
-          : (items.find(i => i.level === "ng") || items.find(i => i.level === "warn") || { msg: "そのまま…" }).msg;
-        if (stable && !buzzed) { buzzed = true; navigator.vibrate?.(200); }
+        const lv = stable ? "ok" : w === "ng" ? "ng" : "warn";
+        st.className = `live-status v-${lv}`;
+        const top = items.find(i => i.level === "ng") || items.find(i => i.level === "warn");
+        st.textContent = stable ? (who === "solo" ? "OK！ 足元に印（テープ）をつけて、カメラアプリで撮影" : "OK！ この位置のままカメラアプリで撮影")
+          : (top || { msg: "そのまま…" }).msg;
+        $("liveStage").classList.remove("f-ok", "f-warn", "f-ng"); $("liveStage").classList.add(`f-${lv}`);
+        $("liveBig").textContent = stable ? (who === "solo" ? "OK・足元に印を" : "OK") : top ? shortSay(top) : "そのまま";
+        if (stable && !buzzed) { buzzed = true; navigator.vibrate?.(200); pip(); say(who === "solo" ? "OK。足元に印をつけてください" : "OK、撮れます"); saidText = "OK"; }
+        else if (!stable && top) speakGuide(shortSay(top), now);
       }
       liveRaf = requestAnimationFrame(loop);
     };
@@ -857,11 +1029,22 @@ async function startLive() {
 function stopLive() {
   cancelAnimationFrame(liveRaf);
   if (stream) stream.getTracks().forEach(t => t.stop());
-  stream = null; okSince = 0; buzzed = false; fpsGen++; showCamInfo();
+  stream = null; okSince = 0; buzzed = false; fpsGen++; showCamInfo(); resetGuide();
+  if (document.fullscreenElement) document.exitFullscreen?.();
   $("liveStart").classList.remove("hidden"); $("liveStop").classList.add("hidden");
   $("liveStage").classList.add("hidden"); $("liveCard").classList.add("hidden");
 }
 $("liveStart").onclick = startLive;
+showVoiceBtn();
+$("voiceBtn").onclick = () => { voiceOn = !voiceOn; try { localStorage.setItem("tkdVoice", voiceOn ? "on" : "off"); } catch (e) {} showVoiceBtn(); if (voiceOn) say("声をオンにしました"); else resetGuide(); };
+$("fsBtn").onclick = async () => {
+  const el = $("liveStage");
+  try {
+    if (document.fullscreenElement) await document.exitFullscreen();
+    else { await el.requestFullscreen(); try { await screen.orientation.lock("landscape"); } catch (e) {} }
+  } catch (e) {}
+};
+document.addEventListener("fullscreenchange", () => { $("fsBtn").textContent = document.fullscreenElement ? "戻る" : "全画面"; });
 $("liveStop").onclick = stopLive;
 document.addEventListener("visibilitychange", () => { if (document.hidden) stopLive(); });
 </script>
